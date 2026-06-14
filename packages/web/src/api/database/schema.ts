@@ -48,7 +48,27 @@ export const geofences = sqliteTable("geofences", {
   createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
 });
 
+// Domain Blacklist (Managed by Parents/Admin)
+export const domainBlacklist = sqliteTable("domain_blacklist", {
+  id: text("id").primaryKey(),
+  domain: text("domain").notNull().unique(),
+  category: text("category").notNull(), // 'porn', 'gambling', 'violence', 'etc'
+  riskScore: integer("risk_score").notNull().default(100),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+});
+
+// DNS Logs (Visit History)
+export const dnsLogs = sqliteTable("dns_logs", {
+  id: text("id").primaryKey(),
+  childId: text("child_id").notNull().references(() => children.id),
+  domain: text("domain").notNull(),
+  riskScore: integer("risk_score").notNull(),
+  flagged: integer("flagged", { mode: "boolean" }).notNull().default(false),
+  visitedAt: integer("visited_at", { mode: "timestamp" }).notNull().default(sql`(unixepoch())`),
+});
+
 // GPS Events
+export const gpsEvents = sqliteTable("gps_events", {
 export const gpsEvents = sqliteTable("gps_events", {
   id: text("id").primaryKey(),
   childId: text("child_id").notNull().references(() => children.id),

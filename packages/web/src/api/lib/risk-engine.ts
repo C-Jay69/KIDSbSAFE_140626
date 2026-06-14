@@ -80,6 +80,29 @@ export function scoreMessage(params: {
   return { score, category: dominantCategory, summary, matched };
 }
 
+export function scoreDomain(domain: string, blacklist: { domain: string; riskScore: number; category: RiskCategory }[]): {
+  score: number;
+  category: RiskCategory;
+  isFlagged: boolean;
+} {
+  const normalized = domain.toLowerCase().trim();
+  const match = blacklist.find(item => normalized.includes(item.domain));
+
+  if (match) {
+    return {
+      score: match.riskScore,
+      category: match.category,
+      isFlagged: match.riskScore >= 70,
+    };
+  }
+
+  return {
+    score: 0,
+    category: "other",
+    isFlagged: false,
+  };
+}
+
 function buildSummary(
   score: number,
   category: RiskCategory,

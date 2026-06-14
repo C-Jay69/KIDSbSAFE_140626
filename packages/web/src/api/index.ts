@@ -6,6 +6,7 @@ import childrenRoute from "./routes/children";
 import alertsRoute from "./routes/alerts";
 import geofencesRoute from "./routes/geofences";
 import browseRoute from "./routes/browse";
+import dnsRoute from "./routes/dns";
 
 const app = new Hono()
   .use(cors({
@@ -20,7 +21,8 @@ const app = new Hono()
   .route("/children", childrenRoute)
   .route("/alerts", alertsRoute)
   .route("/geofences", geofencesRoute)
-  .route("/browse", browseRoute);
+  .route("/browse", browseRoute)
+  .route("/dns", dnsRoute);
 
 export type AppType = typeof app;
 export default app;
