@@ -82,9 +82,14 @@ export default function StatusScreen() {
           </Text>
         </View>
 
-        <Pressable style={styles.consentBtn} onPress={() => router.push("/(child)/consent")}>
-          <Text style={styles.consentBtnText}>Request Monitoring Review (13+)</Text>
-        </Pressable>
+        <View style={styles.guardBtnContainer}>
+          <Pressable style={styles.guardBtn} onPress={() => router.push("/(child)/network-guard")}>
+            <Text style={styles.guardBtnText}>Activate Network Guard 🌐</Text>
+          </Pressable>
+          <Pressable style={styles.consentBtn} onPress={() => router.push("/(child)/consent")}>
+            <Text style={styles.consentBtnText}>Request Monitoring Review (13+)</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -116,8 +121,16 @@ const styles = StyleSheet.create({
   },
   legalTitle: { color: "#A78BFA", fontWeight: "700", fontSize: 13, marginBottom: 8 },
   legalText: { color: "#64748B", fontSize: 12, lineHeight: 18 },
+  guardBtnContainer: {
+    marginTop: 20, gap: 12,
+  },
+  guardBtn: {
+    backgroundColor: "#7C3AED", borderRadius: 14, paddingVertical: 14, alignItems: "center",
+    shadowColor: "#7C3AED", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
+  },
+  guardBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
   consentBtn: {
-    marginTop: 20, borderWidth: 1, borderColor: "rgba(167,139,250,0.3)", borderRadius: 14,
+    borderWidth: 1, borderColor: "rgba(167,139,250,0.3)", borderRadius: 14,
     paddingVertical: 14, alignItems: "center",
   },
   consentBtnText: { color: "#A78BFA", fontWeight: "600", fontSize: 14 },
