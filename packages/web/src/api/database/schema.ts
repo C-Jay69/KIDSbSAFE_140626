@@ -69,7 +69,6 @@ export const dnsLogs = sqliteTable("dns_logs", {
 
 // GPS Events
 export const gpsEvents = sqliteTable("gps_events", {
-export const gpsEvents = sqliteTable("gps_events", {
   id: text("id").primaryKey(),
   childId: text("child_id").notNull().references(() => children.id),
   lat: real("lat").notNull(),
