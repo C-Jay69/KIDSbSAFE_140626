@@ -162,7 +162,7 @@ export default function DashboardPage() {
 
         {/* Main */}
         <main className="flex-1 p-8 overflow-auto">
-          <div className="max-w-5xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             <div className="mb-8">
               <h1 className="font-display font-700 text-3xl" style={{ fontFamily: 'Outfit, sans-serif' }}>
                 {activeTab === "browse" ? "Browsing History" : (familyData?.family ? `${familyData.family.name} Family` : "Dashboard")}
