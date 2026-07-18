@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useCustomer, useListPlans } from "autumn-js/react";
+import { useListPlans, useCustomer } from "autumn-js/react";
 import { authClient } from "../lib/auth";
+import SiteFooter from "../components/SiteFooter";
 
 type BillingInterval = "monthly" | "annual";
 
@@ -289,11 +290,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <footer className="border-t py-10 px-6 text-center text-sm text-[var(--text-muted)]" style={{ borderColor: "var(--border)" }}>
-        <img src="/logo.png" alt="KIDSbSAFE" className="h-8 w-auto mx-auto mb-2" />
-        <p>Ethical family safety. Built with transparency and trust.</p>
-        <p className="mt-2 text-xs opacity-60">© 2026 KIDSbSAFE. All rights reserved.</p>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

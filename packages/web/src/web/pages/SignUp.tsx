@@ -189,6 +189,11 @@ export default function SignUpPage() {
               <span className="text-purple-400 hover:text-purple-300 cursor-pointer font-500">Sign in</span>
             </Link>
           </p>
+          <p className="text-center text-xs text-[var(--text-muted)] mt-4">
+            By signing up you agree to our{" "}
+            <Link href="/terms"><span className="underline hover:text-white cursor-pointer">Terms</span></Link> and{" "}
+            <Link href="/privacy"><span className="underline hover:text-white cursor-pointer">Privacy Policy</span></Link>.
+          </p>
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ import DashboardPage from "./pages/Dashboard";
 import PairPage from "./pages/Pair";
 import SettingsPage from "./pages/Settings";
 import PricingPage from "./pages/Pricing";
+import LegalPage from "./pages/Legal";
 
 export function App() {
   return (
@@ -17,6 +18,10 @@ export function App() {
         <Route path="/sign-in" component={SignInPage} />
         <Route path="/sign-up" component={SignUpPage} />
         <Route path="/pricing" component={PricingPage} />
+        <Route path="/legal" component={LegalPage} />
+        <Route path="/privacy" component={LegalPage} />
+        <Route path="/terms" component={LegalPage} />
+        <Route path="/cookies" component={LegalPage} />
         <Route path="/dashboard">
           <ProtectedRoute>
             <DashboardPage />
