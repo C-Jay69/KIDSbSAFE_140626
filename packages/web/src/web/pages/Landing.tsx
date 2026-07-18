@@ -75,7 +75,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="max-w-5xl mx-auto px-6 pt-20 pb-24 text-center">
+      <section className="max-w-7xl mx-auto px-6 pt-20 pb-24 text-center">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass mb-8 text-sm text-[var(--text-muted)]">
           <span className="w-2 h-2 rounded-full bg-green-400 inline-block animate-pulse" />
           Ethical • Transparent • Trusted by families
@@ -104,7 +104,7 @@ export default function LandingPage() {
         </div>
 
         {/* Hero visual */}
-        <div className="mt-20 glass-strong p-8 max-w-3xl mx-auto glow-purple">
+        <div className="mt-20 glass-strong p-8 max-w-4xl mx-auto glow-purple">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-3 h-3 rounded-full bg-red-400" />
             <div className="w-3 h-3 rounded-full bg-yellow-400" />
@@ -136,7 +136,7 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="max-w-5xl mx-auto px-6 py-20">
+      <section id="how-it-works" className="max-w-7xl mx-auto px-6 py-20">
         <h2 className="font-display font-700 text-4xl text-center mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>How KIDSbSAFE Works</h2>
         <p className="text-[var(--text-muted)] text-center mb-14">Three apps. One mission. Complete transparency.</p>
         <div className="grid md:grid-cols-3 gap-6">
@@ -155,7 +155,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="max-w-5xl mx-auto px-6 py-20">
+      <section className="max-w-7xl mx-auto px-6 py-20">
         <h2 className="font-display font-700 text-4xl text-center mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Everything you need</h2>
         <p className="text-[var(--text-muted)] text-center mb-14">Built for parents who want protection without paranoia.</p>
         <div className="grid md:grid-cols-3 gap-6">
@@ -170,7 +170,7 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <section className="max-w-5xl mx-auto px-6 py-20" id="pricing">
+      <section className="max-w-7xl mx-auto px-6 py-20" id="pricing">
         <h2 className="font-display font-700 text-4xl text-center mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Simple pricing</h2>
         <p className="text-[var(--text-muted)] text-center mb-14">Start free. Upgrade when you're ready.</p>
         <div className="grid md:grid-cols-3 gap-6">
@@ -208,7 +208,7 @@ export default function LandingPage() {
       </section>
 
       {/* Why choose KIDSbSAFE — comparison vs competitors */}
-      <section className="max-w-5xl mx-auto px-6 py-20">
+      <section className="max-w-7xl mx-auto px-6 py-20">
         <h2 className="font-display font-700 text-4xl text-center mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>
           Ethical by design — not by marketing
         </h2>
@@ -249,7 +249,7 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ */}
-      <section className="max-w-3xl mx-auto px-6 py-20">
+      <section className="max-w-4xl mx-auto px-6 py-20">
         <h2 className="font-display font-700 text-4xl text-center mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Questions parents ask</h2>
         <p className="text-[var(--text-muted)] text-center mb-14">Straight answers. No fine print.</p>
         <div className="space-y-4">
