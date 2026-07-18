@@ -7,6 +7,7 @@ import SignUpPage from "./pages/SignUp";
 import DashboardPage from "./pages/Dashboard";
 import PairPage from "./pages/Pair";
 import SettingsPage from "./pages/Settings";
+import PricingPage from "./pages/Pricing";
 
 export function App() {
   return (
@@ -15,6 +16,7 @@ export function App() {
         <Route path="/" component={LandingPage} />
         <Route path="/sign-in" component={SignInPage} />
         <Route path="/sign-up" component={SignUpPage} />
+        <Route path="/pricing" component={PricingPage} />
         <Route path="/dashboard">
           <ProtectedRoute>
             <DashboardPage />

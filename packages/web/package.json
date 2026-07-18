@@ -8,7 +8,7 @@
   "scripts": {
     "build": "tsc --noEmit && vite build",
     "dev": "vite",
-    "start": "bun src/server.ts",
+    "start": "bun src/api/server.ts",
     "typecheck": "tsc --noEmit",
     "lint": "cd ../.. && oxlint packages/web --deny-warnings --no-error-on-unmatched-pattern",
     "preview": "bun run build && vite preview",
@@ -19,7 +19,6 @@
   },
   "dependencies": {
     "@better-auth/expo": "1.4.22",
-    "@libsql/client": "^0.17.2",
     "@radix-ui/react-slot": "^1.2.4",
     "@runablehq/website-runtime": "^0.10.0",
     "@tanstack/react-query": "^5.100.6",

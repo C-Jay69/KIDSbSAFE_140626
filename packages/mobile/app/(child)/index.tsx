@@ -3,6 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useEffect, useState } from "react";
+import { startGpsTracking } from "../../lib/gps";
 
 export default function ChildHome() {
   const router = useRouter();
@@ -21,6 +22,13 @@ export default function ChildHome() {
       setChildName(childName);
     });
   }, []);
+
+  // Once paired, begin reporting live GPS to the parent dashboard.
+  useEffect(() => {
+    if (paired) {
+      startGpsTracking();
+    }
+  }, [paired]);
 
   if (paired === null) return null;
 

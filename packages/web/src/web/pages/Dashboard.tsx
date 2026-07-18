@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient, clearToken } from "../lib/auth";
 import { api } from "../lib/api";
 import { useCustomer } from "autumn-js/react";
+import GpsMap from "../components/GpsMap";
 
 type Alert = { id: string; childId: string; riskScore: number; summary: string; category: string; createdAt: string };
 type Child = { id: string; name: string; age: number; pairedAt: string | null };
@@ -49,7 +50,7 @@ export default function DashboardPage() {
 
   const [newFamilyName, setNewFamilyName] = useState("");
   const [familyError, setFamilyError] = useState("");
-  const [activeTab, setActiveTab] = useState<"overview" | "browse">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "browse" | "location">("overview");
   const [selectedChild, setSelectedChild] = useState<string | null>(null);
 
   const browseQ = useQuery({
@@ -68,6 +69,30 @@ export default function DashboardPage() {
     },
     enabled: !!session && activeTab === "browse",
     refetchInterval: 15000,
+  });
+
+  const geoQ = useQuery({
+    queryKey: ["geo"],
+    queryFn: async () => {
+      const res = await api.geo.$get();
+      const json = (await res.json()) as { locations: any[] };
+      return (json.locations ?? []) as any[];
+    },
+    enabled: !!session,
+    refetchInterval: 30000,
+  });
+
+  const seedDemo = useMutation({
+    mutationFn: async () => {
+      const res = await api.demo.$post();
+      if (!res.ok) throw new Error("Failed to load demo data");
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["family"] });
+      qc.invalidateQueries({ queryKey: ["alerts"] });
+      qc.invalidateQueries({ queryKey: ["geo"] });
+    },
   });
 
   const handleSignOut = async () => {
@@ -100,6 +125,7 @@ export default function DashboardPage() {
             {[
               { label: "Dashboard", icon: "⬛", tab: "overview" as const },
               { label: "Browsing History", icon: "🌐", tab: "browse" as const },
+              { label: "GPS Map", icon: "📍", tab: "location" as const },
             ].map((n) => (
               <div
                 key={n.label}
@@ -223,6 +249,23 @@ export default function DashboardPage() {
               </div>
             )}
 
+            {/* GPS Map Tab */}
+            {activeTab === "location" && (
+              <div>
+                <div className="mb-6">
+                  <h2 className="font-display font-700 text-2xl mb-1" style={{ fontFamily: 'Outfit, sans-serif' }}>GPS Map</h2>
+                  <p className="text-sm text-[var(--text-muted)]">
+                    Live location of paired child devices. Geofence breaches surface as alerts.
+                  </p>
+                </div>
+                {geoQ.isLoading ? (
+                  <div className="glass p-6 rounded-2xl text-sm text-[var(--text-muted)]">Loading map…</div>
+                ) : (
+                  <GpsMap locations={geoQ.data ?? []} />
+                )}
+              </div>
+            )}
+
             {/* Overview Tab */}
             {activeTab === "overview" && (<>
 
@@ -257,6 +300,20 @@ export default function DashboardPage() {
                   </button>
                 </form>
                 {familyError && <p className="text-red-400 text-sm mt-2">{familyError}</p>}
+                <div className="mt-5 pt-5 border-t flex items-center justify-between" style={{ borderColor: "var(--border)" }}>
+                  <div>
+                    <div className="text-sm font-600">Just exploring?</div>
+                    <div className="text-xs text-[var(--text-muted)]">Load simulated children, GPS & sample alerts.</div>
+                  </div>
+                  <button
+                    onClick={() => seedDemo.mutate()}
+                    disabled={seedDemo.isPending}
+                    className="px-5 py-2.5 rounded-xl text-sm font-600 glass hover:border-white/20 text-white transition-all disabled:opacity-50"
+                    style={{ fontFamily: 'Outfit, sans-serif' }}
+                  >
+                    {seedDemo.isPending ? "Loading…" : "Load Demo Data"}
+                  </button>
+                </div>
               </div>
             )}
 

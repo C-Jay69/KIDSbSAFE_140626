@@ -24,7 +24,7 @@ const plans = [
   {
     id: "basic",
     name: "Basic",
-    price: "$7",
+    price: "$6.99",
     period: "/mo",
     features: ["Up to 3 children", "Full risk alerts", "Risk scoring", "Geofencing", "500 scans/month"],
     cta: "Start Basic",
@@ -33,9 +33,9 @@ const plans = [
   {
     id: "premium",
     name: "Premium",
-    price: "$11",
+    price: "$10.99",
     period: "/mo",
-    features: ["Unlimited children", "Custom rules", "Trend analysis", "Family automation", "Unlimited scans"],
+    features: ["Unlimited children", "Custom AI rules", "Trend analysis", "Family automation", "Unlimited scans"],
     cta: "Go Premium",
     highlight: false,
   },
@@ -60,6 +60,9 @@ export default function LandingPage() {
             <>
               <Link href="/sign-in">
                 <button className="text-sm font-500 text-[var(--text-muted)] hover:text-white transition-colors">Sign In</button>
+              </Link>
+              <Link href="/pricing">
+                <button className="text-sm font-500 text-[var(--text-muted)] hover:text-white transition-colors">Pricing</button>
               </Link>
               <Link href="/sign-up">
                 <button className="px-5 py-2 rounded-xl gradient-purple text-white font-600 text-sm hover:opacity-90 transition-opacity" style={{ fontFamily: 'Outfit, sans-serif' }}>
@@ -201,6 +204,78 @@ export default function LandingPage() {
               </Link>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Why choose KIDSbSAFE — comparison vs competitors */}
+      <section className="max-w-5xl mx-auto px-6 py-20">
+        <h2 className="font-display font-700 text-4xl text-center mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>
+          Ethical by design — not by marketing
+        </h2>
+        <p className="text-[var(--text-muted)] text-center mb-14">
+          Most "parental control" tools hide in the background. We built the opposite.
+        </p>
+        <div className="glass-strong overflow-hidden rounded-2xl">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left" style={{ borderBottom: "1px solid var(--border)" }}>
+                <th className="p-5 font-600">Feature</th>
+                <th className="p-5 font-600 gradient-text">KIDSbSAFE</th>
+                <th className="p-5 font-500 text-[var(--text-muted)]">mSpy / TheOneSpy</th>
+                <th className="p-5 font-500 text-[var(--text-muted)]">Bark</th>
+                <th className="p-5 font-500 text-[var(--text-muted)]">Qustodio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ["Visible on child's device by default", "✅ Always", "❌ Hidden / stealth", "⚠️ Partial", "⚠️ Partial"],
+                ["Ethical, consent-focused", "✅ Core", "❌ No", "✅ Yes", "✅ Yes"],
+                ["No blanket surveillance", "✅ Only flags risk", "❌ Records all", "⚠️ Broad", "⚠️ Broad"],
+                ["AI grooming / predator alerts", "✅ 70+ score", "❌ Raw logs", "✅ Yes", "⚠️ Basic"],
+                ["Pay What You Can option", "✅ From $3", "❌ No", "❌ No", "❌ No"],
+                ["Discounts for single parents/teachers", "✅ Yes", "❌ No", "❌ No", "❌ No"],
+              ].map(([feature, us, mspy, bark, qust], i) => (
+                <tr key={feature} style={{ borderBottom: i < 5 ? "1px solid var(--border)" : "none" }}>
+                  <td className="p-5 text-white/90">{feature}</td>
+                  <td className="p-5 font-600 text-green-300">{us}</td>
+                  <td className="p-5 text-[var(--text-muted)]">{mspy}</td>
+                  <td className="p-5 text-[var(--text-muted)]">{bark}</td>
+                  <td className="p-5 text-[var(--text-muted)]">{qust}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="max-w-3xl mx-auto px-6 py-20">
+        <h2 className="font-display font-700 text-4xl text-center mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Questions parents ask</h2>
+        <p className="text-[var(--text-muted)] text-center mb-14">Straight answers. No fine print.</p>
+        <div className="space-y-4">
+          {[
+            { q: "Is this spyware?", a: "No. KIDSbSAFE is explicitly ethical monitoring for parents of their own minor children. It is not a stalking or covert-surveillance tool like mSpy or TheOneSpy." },
+            { q: "Can kids see it?", a: "Yes — by default. The child app clearly shows monitoring is active with a friendly explanation. Under-13 devices are parent-controlled; for kids 13+ there's a visible opt-out that notifies the parent." },
+            { q: "Do you read all my child's messages?", a: "No. Normal activity (homework, memes, friends) stays private. We only surface high-risk signals — grooming language, suspicious unknown contacts, dangerous content." },
+            { q: "How does predator detection work?", a: "A rule-based risk engine scores messages, contacts and GPS patterns 0–100. Alerts fire only at 70+ risk, e.g. an unknown contact asking 'ASL?' or pushing meet-ups / private photos." },
+            { q: "What platforms are covered?", a: "We focus on social platforms where predators operate — Roblox, TikTok, Instagram, Snapchat — plus web browsing safety and geofencing." },
+            { q: "Do I need to install anything on a real device to try it?", a: "No. The demo runs with simulated child data so you can explore the parent dashboard immediately." },
+          ].map((f) => (
+            <details key={f.q} className="glass p-5 rounded-2xl group" style={{ border: "1px solid var(--border)" }}>
+              <summary className="font-600 cursor-pointer list-none flex justify-between items-center" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                {f.q}
+                <span className="text-[var(--text-muted)] group-open:rotate-45 transition-transform text-xl leading-none">+</span>
+              </summary>
+              <p className="text-sm text-[var(--text-muted)] mt-3 leading-relaxed">{f.a}</p>
+            </details>
+          ))}
+        </div>
+        <div className="text-center mt-10">
+          <Link href="/pricing">
+            <button className="px-8 py-4 rounded-2xl text-white font-700 text-base hover:opacity-90 transition-all hover:scale-105" style={{ background: "linear-gradient(135deg, #F97316, #EC4899)", fontFamily: 'Outfit, sans-serif' }}>
+              See Pricing
+            </button>
+          </Link>
         </div>
       </section>
 

@@ -1,4 +1,5 @@
 import type { Plugin, ViteDevServer } from "vite";
+import path from "path";
 
 export default function honoDevPlugin(): Plugin {
   return {
@@ -27,7 +28,11 @@ export default function honoDevPlugin(): Plugin {
 }
 
 async function loadApp(server: ViteDevServer) {
-  const mod = await server.ssrLoadModule("/src/api/index.ts");
+  // vite root is the monorepo root, so resolve the API entry from this
+  // plugin's own location: packages/web/vite/plugins -> packages/web
+  const webRoot = path.resolve(__dirname, "..", "..");
+  const apiEntry = path.resolve(webRoot, "src/api/index.ts");
+  const mod = await server.ssrLoadModule(apiEntry);
   return mod.default;
 }
 

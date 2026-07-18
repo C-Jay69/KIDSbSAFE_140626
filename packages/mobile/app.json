@@ -19,11 +19,18 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#0A0B14"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
     },
     "ios": {
       "bundleIdentifier": "com.kidsbsafe.app",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "KIDSbSAFE shares your device's location with your parent so they can keep you safe. Location is only used for the GPS safety map and is visible to you."
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png",

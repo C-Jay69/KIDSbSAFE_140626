@@ -36,10 +36,11 @@ export default function PairScreen() {
         throw new Error(err.error ?? "Pairing failed");
       }
 
-      const data = await res.json() as { child: { name: string }; family: { parentName: string } };
+      const data = await res.json() as { child: { id: string; name: string }; family: { parentName: string } };
       await AsyncStorage.setItem("child_paired", "true");
       await AsyncStorage.setItem("child_name", data.child.name);
       await AsyncStorage.setItem("parent_name", data.family.parentName);
+      await SecureStore.setItemAsync("child_id", data.child.id);
 
       router.replace("/(child)/");
     } catch (e: any) {

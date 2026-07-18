@@ -23,7 +23,7 @@ export const free = plan({
 export const basic = plan({
   id: "basic",
   name: "Basic",
-  price: { amount: 700, interval: "month" },
+  price: { amount: 699, interval: "month" },
   items: [
     item({
       featureId: scans.id,
@@ -36,7 +36,7 @@ export const basic = plan({
 export const premium = plan({
   id: "premium",
   name: "Premium",
-  price: { amount: 1100, interval: "month" },
+  price: { amount: 1099, interval: "month" },
   items: [
     item({
       featureId: scans.id,
