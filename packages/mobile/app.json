@@ -1,0 +1,47 @@
+{
+  "expo": {
+    "name": "KIDSbSAFE",
+    "slug": "kidsbsafe",
+    "version": "1.0.0",
+    "scheme": "kidsbsafe",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#0A0B14"
+    },
+    "android": {
+      "package": "com.kidsbsafe.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#0A0B14"
+      },
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.kidsbsafe.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "KIDSbSAFE shares your device's location with your parent so they can keep you safe. Location is only used for the GPS safety map and is visible to you."
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "apiUrl": "https://kidsbsa-njincq3-preview-4200.runable.site/",
+      "applicationId": "kidsbsa-njincq3"
+    }
+  }
+}
