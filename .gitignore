@@ -6,3 +6,7 @@ dist/
 *.log
 .DS_Store
 .expo/
+
+# Unpacked copy of this repository (as shipped in KIDSbSAFE_140626-main.zip).
+# It carries its own .git, so `git add` would otherwise stage a 95 MB gitlink.
+/KIDSbSAFE_140626-main/
