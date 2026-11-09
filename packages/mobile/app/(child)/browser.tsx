@@ -1,18 +1,14 @@
 import { useRef, useState, useCallback } from "react";
 import {
   View, Text, StyleSheet, Pressable, TextInput,
-  ActivityIndicator, Platform, KeyboardAvoidingView, Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { WebView, WebViewNavigation } from "react-native-webview";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Constants from "expo-constants";
-
-const API_BASE =
-  Constants.expoConfig?.extra?.apiUrl ??
-  process.env.EXPO_PUBLIC_API_URL ??
-  "https://kidsbsa-njincq3-preview-4200.runable.site";
+import * as SecureStore from "expo-secure-store";
+import { API_BASE_URL } from "../../lib/config";
 
 // URLs that are always safe to skip scanning (performance)
 const SKIP_DOMAINS = [
@@ -39,22 +35,6 @@ function normaliseUrl(raw: string): string {
   return `https://www.google.com/search?q=${encodeURIComponent(trimmed)}`;
 }
 
-const BLOCK_HTML = `
-<html>
-<head><meta name="viewport" content="width=device-width,initial-scale=1"><style>
-body{background:#0A0B14;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;font-family:sans-serif;}
-.box{text-align:center;padding:32px;max-width:340px;}
-.shield{font-size:80px;margin-bottom:16px;}
-h1{color:#EF4444;font-size:22px;margin-bottom:8px;}
-p{color:#94A3B8;font-size:14px;line-height:22px;}
-</style></head>
-<body><div class="box">
-<div class="shield">🛡️</div>
-<h1>Site Blocked</h1>
-<p>This website has been blocked by KIDSbSAFE because it contains content that is not suitable. Your parent has been notified.</p>
-</div></body></html>
-`;
-
 export default function SafeBrowser() {
   const router = useRouter();
   const webviewRef = useRef<WebView>(null);
@@ -66,21 +46,35 @@ export default function SafeBrowser() {
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
   const scanningRef = useRef<Set<string>>(new Set());
+  const recentAllowedRef = useRef<Map<string, number>>(new Map());
 
   const scanUrl = useCallback(async (navUrl: string, title?: string) => {
     if (shouldSkip(navUrl)) return true;
     if (scanningRef.current.has(navUrl)) return true;
+    // Avoid re-scanning the same URL when the WebView reports the navigation
+    // we just pre-checked (that would double-log every visit).
+    const recentlyAllowed = recentAllowedRef.current.get(navUrl);
+    if (recentlyAllowed && Date.now() - recentlyAllowed < 10_000) return true;
     scanningRef.current.add(navUrl);
 
     try {
-      const childId = await AsyncStorage.getItem("child_id");
-      if (!childId) return true; // no childId = not paired, allow
+      // child_id is written to SecureStore during pairing. The old code read
+      // it from AsyncStorage, which always returned null, so every navigation
+      // was allowed without ever being scanned.
+      const childId =
+        (await SecureStore.getItemAsync("child_id")) ??
+        (await AsyncStorage.getItem("child_id"));
+      if (!childId) return true; // not paired: nothing to report
 
-      const res = await fetch(`${API_BASE}/api/browse/check`, {
+      const deviceToken = await SecureStore.getItemAsync("child_device_token");
+      if (!deviceToken) return true;
+
+      const res = await fetch(`${API_BASE_URL}/api/browse/check`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ childId, url: navUrl, title }),
+        body: JSON.stringify({ childId, deviceToken, url: navUrl, title }),
       });
+      if (!res.ok) return true;
       const data = await res.json() as { safe: boolean; block: boolean; reason?: string };
 
       if (data.block) {
@@ -88,6 +82,8 @@ export default function SafeBrowser() {
         setBlockedReason(data.reason ?? "Content not allowed");
         return false;
       }
+
+      recentAllowedRef.current.set(navUrl, Date.now());
     } catch {
       // network error — fail open (don't block)
     } finally {
@@ -127,12 +123,18 @@ export default function SafeBrowser() {
     []
   );
 
-  const navigate = useCallback((rawInput: string) => {
+  const navigate = useCallback(async (rawInput: string) => {
     const full = normaliseUrl(rawInput);
+    // Pre-check before the WebView loads so blocked content never renders.
+    const allowed = await scanUrl(full);
+    if (!allowed) {
+      setInputUrl(rawInput);
+      return;
+    }
     setBlocked(false);
     setUrl(full);
     setInputUrl(rawInput);
-  }, []);
+  }, [scanUrl]);
 
   const handleGoPress = useCallback(() => navigate(inputUrl), [inputUrl, navigate]);
 

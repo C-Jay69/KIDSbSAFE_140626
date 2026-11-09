@@ -4,8 +4,10 @@ import { getToken } from "./auth";
 
 const client = hc<AppType>("/", {
   headers: () => {
+    const headers: Record<string, string> = {};
     const token = getToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
   },
 });
 

@@ -1,16 +1,16 @@
 import { hc } from "hono/client";
-import Constants from "expo-constants";
 import type { AppType } from "@template/web";
 import { getToken } from "./auth";
+import { requireApiBaseUrl } from "./config";
 
-const baseUrl =
-  Constants.expoConfig?.extra?.apiUrl ??
-  process.env.EXPO_PUBLIC_API_URL;
-
-const client = hc<AppType>(baseUrl!, {
+// requireApiBaseUrl() throws at module load with a clear message if the app
+// was built without an API URL, instead of issuing requests to "undefined".
+const client = hc<AppType>(requireApiBaseUrl(), {
   headers: () => {
+    const headers: Record<string, string> = {};
     const token = getToken();
-    return token ? { Authorization: `Bearer ${token}` } : {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
   },
 });
 

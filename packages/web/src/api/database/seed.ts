@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { db } from "./index";
 import { domainBlacklist } from "./schema";
 
@@ -41,7 +42,7 @@ async function seedBlacklist() {
   for (const item of domains) {
     try {
       await db.insert(domainBlacklist).values({
-        id: Math.random().toString(36).substring(2, 15),
+        id: randomUUID(),
         domain: item.domain,
         category: item.category,
         riskScore: item.riskScore,
