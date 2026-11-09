@@ -1,5 +1,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "wouter";
+import { api } from "../lib/api";
 import { authClient } from "../lib/auth";
 
 /* ------------------------------------------------------------------------ */
@@ -281,10 +282,8 @@ function NavLink({ label, href, onNavigate }: { label: string; href: string; onN
     );
   }
   return (
-    <Link href={href}>
-      <span className={className} onClick={onNavigate}>
-        {label}
-      </span>
+    <Link href={href} className={className} onClick={onNavigate}>
+      {label}
     </Link>
   );
 }
@@ -400,18 +399,31 @@ function AlertCard() {
   );
 }
 
-function ZoneCard() {
+function ZoneCard({
+  title = "School zone",
+  detail = "Arrived 8:42 · on time",
+  tone = "sky",
+}: {
+  title?: string;
+  detail?: string;
+  tone?: "sky" | "emerald";
+}) {
+  const tones = {
+    sky: "bg-sky-100 text-sky-600",
+    emerald: "bg-emerald-100 text-emerald-600",
+  } as const;
+
   return (
     <div className="w-full rounded-2xl bg-white/95 p-3.5 shadow-[0_18px_45px_-15px_rgba(15,23,42,0.22)] ring-1 ring-slate-900/5 backdrop-blur">
       <div className="flex items-center gap-2.5">
-        <span className="grid h-9 w-9 place-items-center rounded-xl bg-sky-100 text-sky-600">
+        <span className={`grid h-9 w-9 place-items-center rounded-xl ${tones[tone]}`}>
           <Icon name="pin" className="h-[18px] w-[18px]" />
         </span>
-        <div>
-          <p className="text-[11px] font-semibold text-slate-900">School zone</p>
-          <p className="text-[10px] text-slate-500">Arrived 8:42 · on time</p>
+        <div className="min-w-0">
+          <p className="truncate text-[11px] font-semibold text-slate-900">{title}</p>
+          <p className="truncate text-[10px] text-slate-500">{detail}</p>
         </div>
-        <span className="ml-auto grid h-6 w-6 place-items-center rounded-full bg-emerald-100 text-emerald-600">
+        <span className="ml-auto grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-600">
           <Icon name="check" className="h-3.5 w-3.5" />
         </span>
       </div>
@@ -419,46 +431,41 @@ function ZoneCard() {
   );
 }
 
-function MapVisual() {
+/**
+ * Photography frame used by every product section.
+ *
+ * Photos are served from /images and cropped with `object-cover`, so each
+ * frame only needs a height. The gradient scrim keeps white cards readable
+ * wherever they overlap the picture.
+ */
+function PhotoPanel({
+  src,
+  alt,
+  className = "",
+  scrim = "from-slate-950/70",
+  priority = false,
+  children,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  scrim?: string;
+  priority?: boolean;
+  children?: ReactNode;
+}) {
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-sky-50 via-white to-violet-50 p-6 ring-1 ring-slate-200/70 shadow-[0_25px_60px_-25px_rgba(30,64,175,0.35)]">
-      <svg viewBox="0 0 360 260" className="w-full h-auto" role="img" aria-label="Illustrated map showing safe zones around home and school">
-        <defs>
-          <linearGradient id="road" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#CBD5E1" />
-            <stop offset="100%" stopColor="#E2E8F0" />
-          </linearGradient>
-        </defs>
-        <rect width="360" height="260" rx="18" fill="#F8FAFC" />
-        {/* parks */}
-        <rect x="18" y="150" width="86" height="80" rx="14" fill="#DCFCE7" />
-        <rect x="250" y="18" width="92" height="66" rx="14" fill="#DCFCE7" />
-        {/* roads */}
-        <path d="M0 118h360" stroke="url(#road)" strokeWidth="16" />
-        <path d="M144 0v260" stroke="url(#road)" strokeWidth="16" />
-        <path d="M0 210h360" stroke="url(#road)" strokeWidth="10" />
-        <path d="M270 0v260" stroke="url(#road)" strokeWidth="10" />
-        {/* safe zone rings */}
-        <circle cx="96" cy="146" r="46" fill="#8B5CF6" fillOpacity="0.10" />
-        <circle cx="96" cy="146" r="46" fill="none" stroke="#8B5CF6" strokeOpacity="0.45" strokeDasharray="5 5" strokeWidth="2" />
-        <circle cx="96" cy="146" r="7" fill="#7C3AED" />
-        <text x="96" y="128" textAnchor="middle" fontSize="10" fontWeight="700" fill="#6D28D9">School</text>
-
-        <circle cx="268" cy="196" r="42" fill="#0EA5E9" fillOpacity="0.10" />
-        <circle cx="268" cy="196" r="42" fill="none" stroke="#0EA5E9" strokeOpacity="0.45" strokeDasharray="5 5" strokeWidth="2" />
-        <circle cx="268" cy="196" r="7" fill="#0284C7" />
-        <text x="268" y="245" textAnchor="middle" fontSize="10" fontWeight="700" fill="#0369A1">Home</text>
-
-        {/* route */}
-        <path d="M96 146 C 140 168, 190 178, 268 196" fill="none" stroke="#7C3AED" strokeWidth="3" strokeDasharray="2 7" strokeLinecap="round" />
-
-        <g transform="translate(70, 134)">
-          <circle r="14" fill="#FFFFFF" opacity="0.9" />
-        </g>
-      </svg>
-      <div className="absolute bottom-4 left-4 rounded-xl bg-white/90 px-3 py-2 text-[10px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-900/5 backdrop-blur">
-        School → Home · 1.4 km
-      </div>
+    <div
+      className={`relative overflow-hidden rounded-[2rem] bg-slate-900 shadow-[0_35px_80px_-30px_rgba(15,23,42,0.55)] ${className}`}
+    >
+      <img
+        src={src}
+        alt={alt}
+        className="h-full w-full object-cover object-center"
+        loading={priority ? "eager" : "lazy"}
+        decoding="async"
+      />
+      <div className={`pointer-events-none absolute inset-0 bg-gradient-to-t ${scrim} via-slate-950/10 to-transparent`} />
+      {children}
     </div>
   );
 }
@@ -467,62 +474,212 @@ function MapVisual() {
 /* Contact form                                                              */
 /* ------------------------------------------------------------------------ */
 
+const SUPPORT_EMAIL = "support@hydraforge.tech";
+
+const CONTACT_TOPICS = [
+  "General question",
+  "Billing & plans",
+  "Privacy or data request",
+  "Technical help",
+  "Schools & partnerships",
+];
+
+type ContactStatus = "idle" | "sending" | "sent" | "error";
+
 function ContactForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [topic, setTopic] = useState(CONTACT_TOPICS[0]);
   const [message, setMessage] = useState("");
+  // Honeypot: hidden from people, irresistible to simple bots.
+  const [website, setWebsite] = useState("");
+  const [status, setStatus] = useState<ContactStatus>("idle");
+  const [feedback, setFeedback] = useState("");
+  const [showFallback, setShowFallback] = useState(false);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const mailtoHref = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+    `KIDSbSAFE enquiry from ${name.trim() || "a parent"}`,
+  )}&body=${encodeURIComponent(`${message}\n\n— ${name}\nReply to: ${email}`)}`;
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const subject = encodeURIComponent(`KIDSbSAFE enquiry from ${name || "a parent"}`);
-    const body = encodeURIComponent(`${message}\n\n— ${name}\nReply to: ${email}`);
-    window.location.href = `mailto:support@hydraforge.tech?subject=${subject}&body=${body}`;
+    if (status === "sending") return;
+
+    setStatus("sending");
+    setFeedback("");
+    setShowFallback(false);
+
+    try {
+      const res = await api.contact.$post({
+        json: { name, email, topic, message, website },
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        error?: string;
+        fallback?: string;
+      };
+
+      if (res.ok && data.ok) {
+        setStatus("sent");
+        setName("");
+        setEmail("");
+        setMessage("");
+        setTopic(CONTACT_TOPICS[0]);
+        return;
+      }
+
+      setFeedback(data.error ?? "Something went wrong. Please try again.");
+      setShowFallback(data.fallback === "mailto" || res.status >= 500);
+      setStatus("error");
+    } catch {
+      // Offline, or an API deployment without this route. The mail-client link
+      // still works, so offer it instead of dead-ending the form.
+      setFeedback("We couldn't reach the server. You can email us directly instead.");
+      setShowFallback(true);
+      setStatus("error");
+    }
   };
 
   const field =
     "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 outline-none focus:border-violet-400 focus:ring-4 focus:ring-violet-100 transition";
 
+  if (status === "sent") {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-3xl bg-white p-8 text-center shadow-[0_25px_60px_-30px_rgba(76,29,149,0.35)] ring-1 ring-slate-200/80 md:p-12">
+        <span className="grid h-14 w-14 place-items-center rounded-2xl bg-emerald-100 text-emerald-600">
+          <Icon name="check" className="h-7 w-7" />
+        </span>
+        <h3 className="mt-5 font-display text-2xl font-extrabold text-slate-900">Message sent</h3>
+        <p className="mt-3 max-w-sm text-sm leading-relaxed text-slate-600">
+          Thanks for getting in touch. A real person will reply to your email within 24–48 business
+          hours.
+        </p>
+        <button
+          type="button"
+          onClick={() => setStatus("idle")}
+          className="mt-6 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-violet-300 hover:text-violet-700"
+        >
+          Send another message
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="rounded-3xl bg-white p-6 md:p-8 shadow-[0_25px_60px_-30px_rgba(76,29,149,0.35)] ring-1 ring-slate-200/80">
-      <div className="grid sm:grid-cols-2 gap-4">
-        <label className="block">
-          <span className="mb-1.5 block text-xs font-semibold text-slate-700">Your name</span>
-          <input className={field} value={name} onChange={(e) => setName(e.target.value)} placeholder="Alex" required />
+    <form
+      onSubmit={handleSubmit}
+      className="rounded-3xl bg-white p-6 md:p-8 shadow-[0_25px_60px_-30px_rgba(76,29,149,0.35)] ring-1 ring-slate-200/80"
+    >
+      <div
+        aria-hidden="true"
+        style={{ position: "absolute", left: "-9999px", width: 1, height: 1, overflow: "hidden" }}
+      >
+        <label htmlFor="contact-website">
+          Website
+          <input
+            id="contact-website"
+            aria-label="Website"
+            tabIndex={-1}
+            autoComplete="off"
+            name="website"
+            value={website}
+            onChange={(e) => setWebsite(e.target.value)}
+          />
         </label>
-        <label className="block">
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-4">
+        <label className="block" htmlFor="contact-name">
+          <span className="mb-1.5 block text-xs font-semibold text-slate-700">Your name</span>
+          <input
+            id="contact-name"
+            aria-label="Your name"
+            className={field}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Alex"
+            autoComplete="name"
+            maxLength={100}
+            required
+          />
+        </label>
+        <label className="block" htmlFor="contact-email">
           <span className="mb-1.5 block text-xs font-semibold text-slate-700">Email</span>
           <input
+            id="contact-email"
+            aria-label="Email"
             className={field}
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="alex@example.com"
+            autoComplete="email"
+            maxLength={200}
             required
           />
         </label>
       </div>
-      <label className="mt-4 block">
+
+      <label className="mt-4 block" htmlFor="contact-topic">
+        <span className="mb-1.5 block text-xs font-semibold text-slate-700">Topic</span>
+        <select
+          id="contact-topic"
+          className={field}
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+        >
+          {CONTACT_TOPICS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="mt-4 block" htmlFor="contact-message">
         <span className="mb-1.5 block text-xs font-semibold text-slate-700">How can we help?</span>
         <textarea
+          id="contact-message"
+          aria-label="How can we help?"
           className={`${field} min-h-[120px] resize-y`}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Tell us a little about your family and what you need."
+          maxLength={5000}
           required
         />
       </label>
-      <button
-        type="submit"
-        className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-pink-500 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-violet-500/25 transition hover:opacity-95 sm:w-auto"
-        style={{ fontFamily: "Outfit, sans-serif" }}
-      >
-        Send message
-        <Icon name="arrow" className="h-4 w-4" />
-      </button>
+
+      {status === "error" && (
+        <div className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+          <p>{feedback}</p>
+          {showFallback && (
+            <a className="mt-1 inline-block font-semibold underline underline-offset-2" href={mailtoHref}>
+              Email {SUPPORT_EMAIL}
+            </a>
+          )}
+        </div>
+      )}
+
+      <div className="mt-5 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+        <button
+          type="submit"
+          disabled={status === "sending"}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-pink-500 px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-violet-500/25 transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+          style={{ fontFamily: "Outfit, sans-serif" }}
+        >
+          {status === "sending" ? "Sending…" : "Send message"}
+          <Icon name="arrow" className="h-4 w-4" />
+        </button>
+        <p className="text-xs text-slate-500">
+          We reply within 24–48 business hours.
+        </p>
+      </div>
+
       <p className="mt-3 text-xs text-slate-500">
         Or email us directly at{" "}
-        <a className="font-semibold text-violet-700 hover:underline" href="mailto:support@hydraforge.tech">
-          support@hydraforge.tech
+        <a className="font-semibold text-violet-700 hover:underline" href={`mailto:${SUPPORT_EMAIL}`}>
+          {SUPPORT_EMAIL}
         </a>
         .
       </p>
@@ -709,22 +866,28 @@ export default function LandingPage() {
 
             {/* Hero visual */}
             <div className="relative mx-auto w-full max-w-[560px]">
-              <div className="relative rounded-[2.75rem] bg-gradient-to-br from-violet-600 via-indigo-600 to-pink-500 p-6 shadow-[0_40px_90px_-30px_rgba(91,33,182,0.55)] sm:p-7">
-                <div
-                  className="absolute inset-0 rounded-[2.75rem] opacity-40"
-                  style={{
-                    backgroundImage:
-                      "radial-gradient(rgba(255,255,255,0.35) 1px, transparent 1px)",
-                    backgroundSize: "18px 18px",
-                  }}
-                />
-                <div className="relative flex flex-col items-center justify-center gap-4 sm:flex-row sm:items-end">
-                  <div className="flex w-full max-w-[260px] flex-col gap-3 sm:max-w-[236px] sm:pb-6">
-                    <AlertCard />
-                    <ZoneCard />
+              <div className="relative">
+                {/* Accent halo behind the photo */}
+                <div className="absolute -inset-4 -z-10 rounded-[3.25rem] bg-gradient-to-br from-violet-500/30 via-indigo-500/20 to-pink-500/25 blur-2xl" />
+                <PhotoPanel
+                  src="/images/hero-family.jpg"
+                  alt="A parent and child sitting together at home, looking at a phone"
+                  scrim="from-slate-950/75"
+                  priority
+                  className="h-[440px] sm:h-[560px]"
+                >
+                  <div className="absolute inset-x-4 top-4 sm:inset-x-5 sm:top-5">
+                    <div className="ml-auto w-[240px]">
+                      <ZoneCard />
+                    </div>
                   </div>
-                  <PhoneMockup />
-                </div>
+                  <div className="absolute inset-x-4 bottom-4 sm:inset-x-5 sm:bottom-5">
+                    <div className="max-w-[300px]">
+                      <AlertCard />
+                    </div>
+                  </div>
+                  <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/60 to-transparent" />
+                </PhotoPanel>
               </div>
             </div>
           </div>
@@ -809,6 +972,42 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
+
+            {/* Child app — the part your child sees */}
+            <div className="mt-8 grid items-center gap-10 rounded-[2rem] bg-white p-8 shadow-[0_25px_60px_-35px_rgba(15,23,42,0.4)] ring-1 ring-slate-200/80 md:grid-cols-[auto_1fr] md:p-10">
+              <div className="flex justify-center">
+                <PhoneMockup />
+              </div>
+              <div>
+                <Pill>
+                  <Icon name="eye" className="h-3.5 w-3.5" />
+                  On their device too
+                </Pill>
+                <h3 className="mt-4 font-display text-2xl font-extrabold tracking-tight text-slate-900 md:text-3xl">
+                  Your child always knows protection is on.
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600 md:text-base">
+                  Pairing shows a short, plain-language screen on the child&apos;s phone: what the
+                  app does, who it belongs to, and where to ask questions. Nothing is installed
+                  silently, and there is no hidden mode to switch on.
+                </p>
+                <ul className="mt-5 grid gap-2.5 sm:grid-cols-2">
+                  {[
+                    "A visible “Protected” status",
+                    "The reason the app is installed",
+                    "What is and isn't monitored",
+                    "A button to raise a concern",
+                  ].map((line) => (
+                    <li key={line} className="flex items-start gap-2.5 text-sm text-slate-700">
+                      <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700">
+                        <Icon name="check" className="h-3 w-3" />
+                      </span>
+                      {line}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         </section>
 
@@ -850,19 +1049,24 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            <div className="relative flex min-h-[340px] items-center justify-center rounded-[2rem] bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 p-8 shadow-[0_35px_80px_-30px_rgba(49,46,129,0.6)]">
-              <div
-                className="pointer-events-none absolute inset-0 rounded-[2rem] opacity-30"
-                style={{
-                  backgroundImage: "radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px)",
-                  backgroundSize: "22px 22px",
-                }}
-              />
-              <div className="relative w-full max-w-[300px]">
-                <AlertCard />
+            <div className="overflow-hidden rounded-[2rem] bg-gradient-to-b from-slate-900 to-indigo-950 shadow-[0_35px_80px_-30px_rgba(49,46,129,0.6)]">
+              <div className="relative">
+                <img
+                  src="/images/teen-phone.jpg"
+                  alt="A teenager using a phone at home"
+                  className="h-[300px] w-full object-cover object-center sm:h-[340px]"
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/45 to-transparent" />
+              </div>
+              <div className="relative -mt-12 px-5 pb-6 sm:px-8">
+                <div className="max-w-[320px]">
+                  <AlertCard />
+                </div>
                 <div className="mt-3 rounded-2xl bg-white/10 p-3.5 ring-1 ring-white/15 backdrop-blur">
                   <div className="flex items-center gap-2.5">
-                    <span className="grid h-8 w-8 place-items-center rounded-lg bg-emerald-400/20 text-emerald-300">
+                    <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-emerald-400/20 text-emerald-300">
                       <Icon name="shield" className="h-4 w-4" />
                     </span>
                     <div className="min-w-0">
@@ -880,7 +1084,21 @@ export default function LandingPage() {
         <section className="bg-slate-50 py-20 md:py-28">
           <div className="mx-auto grid max-w-7xl items-center gap-12 px-6 lg:grid-cols-2">
             <div className="order-2 lg:order-1">
-              <MapVisual />
+              <PhotoPanel
+                src="/images/family-walk.jpg"
+                alt="A family walking together at sunset"
+                scrim="from-slate-950/80"
+                className="h-[400px] sm:h-[460px]"
+              >
+                <div className="absolute inset-x-4 bottom-4 space-y-2.5 sm:inset-x-6 sm:bottom-6">
+                  <ZoneCard
+                    title="School zone"
+                    detail="Arrived 8:42 · on time"
+                    tone="emerald"
+                  />
+                  <ZoneCard title="Home & street" detail="Arrived 16:05 · on time" tone="sky" />
+                </div>
+              </PhotoPanel>
             </div>
             <div className="order-1 lg:order-2">
               <Pill>
@@ -1096,6 +1314,21 @@ export default function LandingPage() {
         {/* About */}
         <section id="about" className="bg-slate-50 py-20 md:py-28">
           <div className="mx-auto max-w-7xl px-6">
+            <PhotoPanel
+              src="/images/about-family.jpg"
+              alt="A parent sitting with their young child, holding a phone together"
+              scrim="from-slate-950/70"
+              className="mb-12 h-[220px] md:h-[300px]"
+            >
+              <div className="absolute inset-0 flex items-end">
+                <div className="p-6 md:p-10">
+                  <p className="max-w-lg font-display text-xl font-extrabold leading-snug text-white drop-shadow md:text-3xl">
+                    Protection should be something a child can see, not something done to them.
+                  </p>
+                </div>
+              </div>
+            </PhotoPanel>
+
             <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-violet-600">About us</p>

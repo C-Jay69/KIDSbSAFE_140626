@@ -73,7 +73,7 @@ function annualPrice(monthly: number): number {
 
 export default function PricingPage() {
   const { data: session } = authClient.useSession();
-  const { data: customer, attach, isPending } = useCustomer();
+  const { attach, isPending } = useCustomer();
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [pwyc, setPwyc] = useState<number>(PAY_WHAT_YOU_CAN_MIN);
 
