@@ -14,13 +14,13 @@ import { rateLimit } from "../lib/rate-limit";
  *
  * Configuration (all server-side, none of it reaches the browser):
  *   SMTP_HOST, SMTP_PORT (default 587), SMTP_SECURE, SMTP_USER, SMTP_PASS,
- *   CONTACT_TO (default support@hydraforge.tech), CONTACT_FROM (default SMTP_USER)
+ *   CONTACT_TO (default support@kidsbsafe.online), CONTACT_FROM (default SMTP_USER)
  *
  * With no SMTP credentials the route answers 503 + `fallback: "mailto"` so the
  * page can still offer the mail-client link instead of failing silently.
  */
 
-const DEFAULT_CONTACT_TO = "support@hydraforge.tech";
+const DEFAULT_CONTACT_TO = "support@kidsbsafe.online";
 const MAX_BODY_BYTES = 8 * 1024;
 const RATE_LIMIT = 5;
 const RATE_WINDOW_MS = 10 * 60 * 1000;

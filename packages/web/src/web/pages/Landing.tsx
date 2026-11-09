@@ -474,7 +474,7 @@ function PhotoPanel({
 /* Contact form                                                              */
 /* ------------------------------------------------------------------------ */
 
-const SUPPORT_EMAIL = "support@hydraforge.tech";
+const SUPPORT_EMAIL = "support@kidsbsafe.online";
 
 const CONTACT_TOPICS = [
   "General question",
@@ -1421,8 +1421,8 @@ export default function LandingPage() {
 
                 <div className="mt-8 space-y-3">
                   {[
-                    { icon: "mail" as IconName, label: "Support", value: "support@hydraforge.tech", href: "mailto:support@hydraforge.tech" },
-                    { icon: "lock" as IconName, label: "Privacy & data requests", value: "privacy@hydraforge.tech", href: "mailto:privacy@hydraforge.tech" },
+                    { icon: "mail" as IconName, label: "Support", value: "support@kidsbsafe.online", href: "mailto:support@kidsbsafe.online" },
+                    { icon: "lock" as IconName, label: "Privacy & data requests", value: "info@hydraforge.tech", href: "mailto:info@hydraforge.tech" },
                     { icon: "globe" as IconName, label: "Company", value: "Hydraforge Online Business Solutions LLC · Sheridan, WY", href: "/legal" },
                   ].map((row) => (
                     <a
@@ -1530,7 +1530,7 @@ export default function LandingPage() {
                   <a href="/legal" className="transition hover:text-violet-700">Legal &amp; ethics</a>
                 </li>
                 <li>
-                  <a href="mailto:support@hydraforge.tech" className="transition hover:text-violet-700">Support</a>
+                  <a href="mailto:support@kidsbsafe.online" className="transition hover:text-violet-700">Support</a>
                 </li>
               </ul>
             </div>

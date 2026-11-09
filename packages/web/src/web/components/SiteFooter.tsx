@@ -10,7 +10,7 @@ export default function SiteFooter() {
         <Link href="/privacy"><span className="hover:text-white transition-colors cursor-pointer">Privacy</span></Link>
         <Link href="/terms"><span className="hover:text-white transition-colors cursor-pointer">Terms</span></Link>
         <Link href="/cookies"><span className="hover:text-white transition-colors cursor-pointer">Cookies</span></Link>
-        <a href="mailto:support@hydraforge.tech" className="hover:text-white transition-colors">Support</a>
+        <a href="mailto:support@kidsbsafe.online" className="hover:text-white transition-colors">Support</a>
       </div>
       <p className="mt-4 text-xs opacity-60">© 2026 KIDSbSAFE. All rights reserved.</p>
     </footer>

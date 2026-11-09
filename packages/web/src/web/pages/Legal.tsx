@@ -12,7 +12,7 @@ const sections = [
       ["Child Data & Consent", "For children under 13, parental control and consent are mandatory. For ages 13+, children retain visibility of the app and may request an opt-out, which triggers a parent notification."],
       ["Security & Retention", "All data is encrypted in transit and at rest. We retain alert logs for 90 days unless manually archived by the parent. Account deletion requests are processed within 30 days."],
       ["Your Rights", "Parents may access, export, or delete their child's data at any time. Children 13+ may exercise limited data rights per regional privacy laws."],
-      ["Contact", "privacy@hydraforge.tech · Hydraforge Online Business Solutions LLC, 30 N Gould St, Ste R, Sheridan, WY, 82801"],
+      ["Contact", "info@hydraforge.tech · Hydraforge Online Business Solutions LLC, 30 N Gould St, Ste R, Sheridan, WY, 82801"],
     ],
   },
   {
@@ -39,7 +39,7 @@ const sections = [
       ["Analytics Cookies", "Anonymous usage metrics to improve alert accuracy and UI/UX. No personal or child data is tracked."],
       ["Preference Cookies", "Remember dark mode, alert thresholds, and regional settings."],
       ["Consent & Management", "You may adjust cookie preferences via the banner on first visit or in Dashboard Settings. Disabling essential cookies may limit platform functionality. Third-party cookies are restricted to payment and security providers only."],
-      ["Contact", "privacy@hydraforge.tech"],
+      ["Contact", "info@hydraforge.tech"],
     ],
   },
   {
@@ -47,7 +47,7 @@ const sections = [
     title: "Support",
     updated: "",
     body: [
-      ["Email", "support@hydraforge.tech — Response time within 24–48 business hours. Priority escalation available for verified safety emergencies."],
+      ["Email", "support@kidsbsafe.online — Response time within 24–48 business hours. Priority escalation available for verified safety emergencies."],
       ["Self-Help", "Visit our in-app FAQ, setup guides, and troubleshooting docs for instant assistance."],
       ["Emergency Help", "If a child is in immediate danger or you suspect grooming/abuse, contact local law enforcement or a dedicated helpline:"],
       ["US", "National Child Abuse Hotline: 1-800-4-A-CHILD (1-800-422-4453)"],
