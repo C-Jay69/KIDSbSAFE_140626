@@ -9,6 +9,7 @@ import browseRoute from "./routes/browse";
 import dnsRoute from "./routes/dns";
 import geoRoute from "./routes/geo";
 import demoRoute from "./routes/demo";
+import billingRoute from "./routes/billing";
 
 /**
  * Build the origin allowlist once at boot.
@@ -70,7 +71,8 @@ const app = new Hono()
   .route("/browse", browseRoute)
   .route("/dns", dnsRoute)
   .route("/geo", geoRoute)
-  .route("/demo", demoRoute);
+  .route("/demo", demoRoute)
+  .route("/billing", billingRoute);
 
 export type AppType = typeof app;
 export default app;

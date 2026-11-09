@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { authClient, clearToken, getToken } from "../lib/auth";
 import { api } from "../lib/api";
-import { useCustomer } from "autumn-js/react";
+import { useEffectivePlan } from "../lib/plan";
 import GpsMap from "../components/GpsMap";
 
 type Alert = { id: string; childId: string; riskScore: number; summary: string; category: string; createdAt: string };
@@ -20,7 +20,7 @@ function getRiskLabel(score: number) {
 export default function DashboardPage() {
   const [, navigate] = useLocation();
   const { data: session } = authClient.useSession();
-  const { data: customer } = useCustomer();
+  const { planId: activePlan } = useEffectivePlan();
   const qc = useQueryClient();
 
   const family = useQuery({
@@ -116,7 +116,6 @@ export default function DashboardPage() {
   const familyData = family.data as { family: Family | null; children: Child[] } | undefined;
   const alerts = (alertsQ.data as { alerts: Alert[] } | undefined)?.alerts ?? [];
   const children = familyData?.children ?? [];
-  const activePlan = customer?.subscriptions?.[0]?.planId ?? "free";
 
   return (
     <div className="min-h-screen" style={{ background: "var(--bg)" }}>

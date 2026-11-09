@@ -1,13 +1,14 @@
 import { Link } from "wouter";
 import { useCustomer, useListPlans } from "autumn-js/react";
 import { authClient } from "../lib/auth";
+import { useEffectivePlan } from "../lib/plan";
 
 export default function SettingsPage() {
   const { data: session } = authClient.useSession();
   const { data: customer, attach, isPending } = useCustomer();
   const { data: plans } = useListPlans();
 
-  const activePlan = customer?.subscriptions?.[0]?.planId ?? "free";
+  const { planId: activePlan, isAdmin } = useEffectivePlan();
   const scansBalance = customer?.balances?.["scans"];
 
   return (
@@ -43,7 +44,16 @@ export default function SettingsPage() {
         </div>
 
         {/* Usage */}
-        {scansBalance && (
+        {isAdmin && (
+          <div className="glass p-6 rounded-2xl mb-6">
+            <h2 className="font-display font-600 text-lg mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Usage This Month</h2>
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-[var(--text-muted)]">Risk Scans</span>
+              <span>Unlimited</span>
+            </div>
+          </div>
+        )}
+        {!isAdmin && scansBalance && (
           <div className="glass p-6 rounded-2xl mb-6">
             <h2 className="font-display font-600 text-lg mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Usage This Month</h2>
             <div className="flex justify-between text-sm mb-2">

@@ -2,6 +2,7 @@ import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from "react-nati
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useCustomer, useListPlans } from "autumn-js/react";
 import { authClient, clearToken } from "../../lib/auth";
+import { useEffectivePlan } from "../../lib/plan";
 import { useRouter } from "expo-router";
 
 export default function SettingsScreen() {
@@ -10,7 +11,7 @@ export default function SettingsScreen() {
   const { data: plans } = useListPlans();
   const router = useRouter();
 
-  const activePlan = customer?.subscriptions?.[0]?.planId ?? "free";
+  const { planId: activePlan, isAdmin } = useEffectivePlan();
   const scansBalance = customer?.balances?.["scans"];
 
   const handleSignOut = async () => {
@@ -44,7 +45,13 @@ export default function SettingsScreen() {
             <Text style={styles.rowLabel}>Current Plan</Text>
             <Text style={[styles.rowValue, { color: "#A78BFA", fontWeight: "700", textTransform: "capitalize" }]}>{activePlan}</Text>
           </View>
-          {scansBalance && (
+          {isAdmin && (
+            <View style={[styles.row, styles.rowLast]}>
+              <Text style={styles.rowLabel}>Risk Scans</Text>
+              <Text style={styles.rowValue}>Unlimited</Text>
+            </View>
+          )}
+          {!isAdmin && scansBalance && (
             <View style={[styles.row, styles.rowLast]}>
               <Text style={styles.rowLabel}>Risk Scans</Text>
               <Text style={styles.rowValue}>

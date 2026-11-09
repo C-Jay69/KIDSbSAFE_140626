@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { useCustomer } from "autumn-js/react";
 import { authClient } from "../lib/auth";
+import { useEffectivePlan } from "../lib/plan";
 import SiteFooter from "../components/SiteFooter";
 
 type BillingInterval = "monthly" | "annual";
@@ -76,7 +77,7 @@ export default function PricingPage() {
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [pwyc, setPwyc] = useState<number>(PAY_WHAT_YOU_CAN_MIN);
 
-  const activePlan = customer?.subscriptions?.[0]?.planId ?? "free";
+  const { planId: activePlan } = useEffectivePlan();
 
   const handleAttach = (planId: string) => {
     if (planId === "free" || !session) {
