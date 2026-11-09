@@ -18,10 +18,15 @@
   --danger: #EF4444;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+/* Keep the reset inside Tailwind's `base` layer. An unlayered `*` rule beats
+   every rule in `@layer utilities` regardless of specificity, which silently
+   zeroed every `p-*` / `m-*` / `space-y-*` class in the app. */
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
 }
 
 html, body, #root {
@@ -94,6 +99,16 @@ html, body, #root {
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(124, 58, 237, 0.4); border-radius: 3px; }
+
+/* Landing page helpers — the marketing page is a bright surface, so these
+   only cover behaviour (smooth anchors, gentle float) and nothing visual. */
+html { scroll-behavior: smooth; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
+.kbs-landing section[id] { scroll-margin-top: 84px; }
 
 /* Risk badge colors */
 .risk-critical { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.3); color: #FCA5A5; }
