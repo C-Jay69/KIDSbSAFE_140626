@@ -1,5 +1,4 @@
 import { Link } from "wouter";
-import { useCustomer, useListPlans } from "autumn-js/react";
 import { authClient } from "../lib/auth";
 import SiteFooter from "../components/SiteFooter";
 
@@ -160,7 +159,7 @@ export default function LandingPage() {
         <h2 className="font-display font-700 text-4xl text-center mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Everything you need</h2>
         <p className="text-[var(--text-muted)] text-center mb-14">Built for parents who want protection without paranoia.</p>
         <div className="grid md:grid-cols-3 gap-6">
-          {features.map((f) => (
+{features.map((f) => (
             <div key={f.title} className="glass p-6 rounded-2xl hover:border-purple-500/30 transition-all hover:scale-[1.02]">
               <div className="text-3xl mb-4">{f.icon}</div>
               <h3 className="font-600 text-base mb-2">{f.title}</h3>
@@ -170,7 +169,55 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Ethical Commitment */}
+        <section className="max-w-7xl mx-auto px-6 py-20">
+          <h2 className="font-display font-700 text-4xl text-center mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Built on Ethics, Not Surveillance</h2>
+          <p className="text-[var(--text-muted)] text-center mb-16">Our platform is designed around transparency, consent, and the fundamental belief that protecting children shouldn't mean spying on them.</p>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="glass-strong p-8 rounded-2xl">
+              <h3 className="font-display font-700 text-2xl mb-4 gradient-text">Transparent by Design</h3>
+              <p className="text-[var(--text-muted)] leading-relaxed mb-4">
+                KIDSbSAFE is always visible on the child's device with a clear explanation: "This app helps keep you safe online." We never operate in stealth mode or hide our monitoring presence.
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2">
+                  <span className="text-green-400">✅</span>
+                  <span>Child sees "This app helps Mum/Dad keep you safe online"</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-400">✅</span>
+                  <span>No hidden cameras, no keystrokes tracking, no secret screenshots</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-400">✅</span>
+                  <span>Parents receive explicit consent confirmation during setup</span>
+                </li>
+              </ul>
+            </div>
+            <div className="glass-strong p-8 rounded-2xl">
+              <h3 className="font-display font-700 text-2xl mb-4 gradient-text">Risk-First, Not Surveillance-First</h3>
+              <p className="text-[var(--text-muted)] leading-relaxed mb-4">
+                We only surface concerning activity. Our AI risk engine scores messages, contacts, and GPS patterns from 0-100, and alerts fire only when risk reaches 70+.
+              </p>
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-center gap-2">
+                  <span className="text-purple-400">🔍</span>
+                  <span>Normal conversations (homework, memes, friends) stay private</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-purple-400">🎯</span>
+                  <span>Only high-risk patterns (grooming, predators, threats) trigger alerts</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-purple-400">🛡️</span>
+                  <span>Focus on protecting, not punishing</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
       <section className="max-w-7xl mx-auto px-6 py-20" id="pricing">
         <h2 className="font-display font-700 text-4xl text-center mb-4" style={{ fontFamily: 'Outfit, sans-serif' }}>Simple pricing</h2>
         <p className="text-[var(--text-muted)] text-center mb-14">Start free. Upgrade when you're ready.</p>
@@ -259,7 +306,8 @@ export default function LandingPage() {
             { q: "Can kids see it?", a: "Yes — by default. The child app clearly shows monitoring is active with a friendly explanation. Under-13 devices are parent-controlled; for kids 13+ there's a visible opt-out that notifies the parent." },
             { q: "Do you read all my child's messages?", a: "No. Normal activity (homework, memes, friends) stays private. We only surface high-risk signals — grooming language, suspicious unknown contacts, dangerous content." },
             { q: "How does predator detection work?", a: "A rule-based risk engine scores messages, contacts and GPS patterns 0–100. Alerts fire only at 70+ risk, e.g. an unknown contact asking 'ASL?' or pushing meet-ups / private photos." },
-            { q: "What platforms are covered?", a: "We focus on social platforms where predators operate — Roblox, TikTok, Instagram, Snapchat — plus web browsing safety and geofencing." },
+            { q: "How do I know if my child is at risk?", a: "KIDSbSAFE only alerts when risk scores reach 70+. This means normal conversations, studying, and playing stay private. Only genuine danger triggers notifications." },
+            { q: "What platforms are covered?", a: "We focus on social platforms where predators operate — Roblox, TikTok, Instagram, Snapchat — plus web browsing safety and geofencing. Each platform has dedicated monitoring and risk detection." },
             { q: "Do I need to install anything on a real device to try it?", a: "No. The demo runs with simulated child data so you can explore the parent dashboard immediately." },
           ].map((f) => (
             <details key={f.q} className="glass p-5 rounded-2xl group" style={{ border: "1px solid var(--border)" }}>

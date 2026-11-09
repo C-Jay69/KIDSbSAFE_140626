@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { authClient, clearToken } from "../lib/auth";
+import { authClient, clearToken, getToken } from "../lib/auth";
 import { api } from "../lib/api";
 import { useCustomer } from "autumn-js/react";
 import GpsMap from "../components/GpsMap";
@@ -55,17 +55,21 @@ export default function DashboardPage() {
 
   const browseQ = useQuery({
     queryKey: ["browse", selectedChild],
-    queryFn: async () => {
-      const url = selectedChild
-        ? `/api/browse/history?childId=${selectedChild}`
-        : `/api/browse/history`;
-      const res = await fetch(url, {
-        headers: (() => {
-          const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
-          return token ? { Authorization: `Bearer ${token}` } : {};
-        })(),
+    queryFn: async (): Promise<{ history: BrowseEntry[] }> => {
+      // Use the same token key as the auth client. The old code read
+      // "auth_token" (a key that is never written), so every request went out
+      // unauthenticated and the 401 body crashed the render below.
+      const params = selectedChild
+        ? `?childId=${encodeURIComponent(selectedChild)}`
+        : "";
+      const res = await fetch(`/api/browse/history${params}`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
       });
-      return res.json() as Promise<{ history: BrowseEntry[] }>;
+      if (!res.ok) {
+        throw new Error(`Failed to load browsing history (${res.status})`);
+      }
+      const data = await res.json() as { history?: BrowseEntry[] };
+      return { history: Array.isArray(data.history) ? data.history : [] };
     },
     enabled: !!session && activeTab === "browse",
     refetchInterval: 15000,
@@ -205,14 +209,19 @@ export default function DashboardPage() {
                 <div className="glass p-6 rounded-2xl">
                   {browseQ.isLoading ? (
                     <p className="text-[var(--text-muted)] text-sm">Loading history...</p>
-                  ) : !browseQ.data?.history.length ? (
+                  ) : browseQ.isError ? (
+                    <div className="text-center py-12">
+                      <div className="text-4xl mb-3">⚠️</div>
+                      <p className="text-[var(--text-muted)] text-sm">Could not load browsing history. Please try again.</p>
+                    </div>
+                  ) : (browseQ.data?.history.length ?? 0) === 0 ? (
                     <div className="text-center py-12">
                       <div className="text-4xl mb-3">🌐</div>
                       <p className="text-[var(--text-muted)] text-sm">No browsing history yet. The child needs to use the KIDSbSAFE browser on their device.</p>
                     </div>
                   ) : (
                     <div className="space-y-2">
-                      {browseQ.data.history.map((entry) => (
+                      {browseQ.data?.history.map((entry) => (
                         <div
                           key={entry.id}
                           className="flex items-center justify-between p-3 rounded-xl"

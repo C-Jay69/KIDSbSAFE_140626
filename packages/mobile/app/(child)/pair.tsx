@@ -8,6 +8,29 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { api } from "../../lib/api";
 
+/**
+ * The device token is the credential that authorises GPS/browsing writes for
+ * this device, so it must be unguessable. Math.random() is a predictable PRNG;
+ * use Web Crypto where the runtime provides it.
+ */
+function createDeviceToken(): string {
+  const webCrypto = (globalThis as {
+    crypto?: { getRandomValues?: (array: Uint8Array) => Uint8Array };
+  }).crypto;
+
+  if (webCrypto?.getRandomValues) {
+    const bytes = new Uint8Array(32);
+    webCrypto.getRandomValues(bytes);
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  // Fallback for runtimes without Web Crypto. Add expo-crypto if you need a
+  // guaranteed CSPRNG on every native build.
+  let token = "";
+  for (let i = 0; i < 4; i++) token += Math.random().toString(36).slice(2);
+  return `${token}${Date.now().toString(36)}`;
+}
+
 export default function PairScreen() {
   const router = useRouter();
   const [code, setCode] = useState("");
@@ -23,7 +46,7 @@ export default function PairScreen() {
       // Get or create a stable device token
       let deviceToken = await SecureStore.getItemAsync("child_device_token");
       if (!deviceToken) {
-        deviceToken = Math.random().toString(36).substring(2, 18) + Date.now().toString(36);
+        deviceToken = createDeviceToken();
         await SecureStore.setItemAsync("child_device_token", deviceToken);
       }
 

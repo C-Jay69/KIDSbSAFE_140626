@@ -3,12 +3,6 @@
 
 export type RiskCategory = "grooming" | "bullying" | "scam" | "predator" | "other";
 
-interface RiskSignal {
-  score: number;
-  category: RiskCategory;
-  matched: string[];
-}
-
 const KEYWORD_SETS: { pattern: RegExp; weight: number; category: RiskCategory }[] = [
   // Grooming signals
   { pattern: /\b(asl|age[\s,]+sex[\s,]+location)\b/i, weight: 30, category: "grooming" },
@@ -75,18 +69,24 @@ export function scoreMessage(params: {
   // Clamp to 100
   const score = Math.min(100, totalScore);
 
-  const summary = buildSummary(score, dominantCategory, matched, isUnknownContact);
+  const summary = buildSummary(score, dominantCategory, isUnknownContact);
 
   return { score, category: dominantCategory, summary, matched };
 }
 
-export function scoreDomain(domain: string, blacklist: { domain: string; riskScore: number; category: RiskCategory }[]): {
+export function scoreDomain(domain: string, blacklist: { domain: string; riskScore: number; category: string }[]): {
   score: number;
-  category: RiskCategory;
+  category: string;
   isFlagged: boolean;
 } {
-  const normalized = domain.toLowerCase().trim();
-  const match = blacklist.find(item => normalized.includes(item.domain));
+  const normalized = domain.toLowerCase().trim().replace(/\.$/, "");
+  // Match the domain itself or a subdomain of it — never a substring.
+  // `includes()` flagged `notpornhub.com` for `pornhub.com`, and would also
+  // flag `bet365.com.evil.example`, which is backwards.
+  const match = blacklist.find((item) => {
+    const blocked = item.domain.toLowerCase().trim().replace(/\.$/, "");
+    return normalized === blocked || normalized.endsWith(`.${blocked}`);
+  });
 
   if (match) {
     return {
@@ -106,7 +106,6 @@ export function scoreDomain(domain: string, blacklist: { domain: string; riskSco
 function buildSummary(
   score: number,
   category: RiskCategory,
-  matched: string[],
   isUnknownContact: boolean
 ): string {
   const contactNote = isUnknownContact ? "Unknown contact" : "Contact";

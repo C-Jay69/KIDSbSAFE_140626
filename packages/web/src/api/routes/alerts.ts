@@ -1,24 +1,32 @@
 import { Hono } from "hono";
-import { db } from "../database";
-import { alerts, families, children } from "../database/schema";
-import { eq, and, desc } from "drizzle-orm";
-import { requireAuth, authMiddleware } from "../middleware/auth";
-import { scoreMessage } from "../lib/risk-engine";
+import { and, desc, eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
+import { db } from "../database";
+import { alerts, families } from "../database/schema";
+import { requireAuth, authMiddleware, findChildForDevice, type AppVariables } from "../middleware/auth";
+import { rateLimit } from "../lib/rate-limit";
+import { scoreMessage } from "../lib/risk-engine";
 
-const app = new Hono()
+const MAX_MESSAGE_LENGTH = 10_000;
+
+const app = new Hono<{ Variables: AppVariables }>()
   .use(authMiddleware)
   // List alerts for the family
   .get("/", requireAuth, async (c) => {
     const user = c.get("user")!;
-    const familyRows = await db.select().from(families).where(eq(families.parentUserId, user.id));
+    const familyRows = await db
+      .select()
+      .from(families)
+      .where(eq(families.parentUserId, user.id))
+      .limit(1);
     if (familyRows.length === 0) return c.json({ alerts: [] }, 200);
 
     const alertRows = await db
       .select()
       .from(alerts)
       .where(and(eq(alerts.familyId, familyRows[0].id), eq(alerts.dismissed, false)))
-      .orderBy(desc(alerts.createdAt));
+      .orderBy(desc(alerts.createdAt))
+      .limit(500);
 
     return c.json({ alerts: alertRows }, 200);
   })
@@ -26,7 +34,11 @@ const app = new Hono()
   .post("/:id/dismiss", requireAuth, async (c) => {
     const user = c.get("user")!;
     const alertId = c.req.param("id");
-    const familyRows = await db.select().from(families).where(eq(families.parentUserId, user.id));
+    const familyRows = await db
+      .select()
+      .from(families)
+      .where(eq(families.parentUserId, user.id))
+      .limit(1);
     if (familyRows.length === 0) return c.json({ error: "Not found" }, 404);
 
     await db.update(alerts)
@@ -37,17 +49,38 @@ const app = new Hono()
   })
   // Risk scan endpoint — submitted from child device
   .post("/risk-scan", async (c) => {
-    const { childId, message, isUnknownContact, messageCount } = await c.req.json<{
-      childId: string;
-      message: string;
-      isUnknownContact?: boolean;
-      messageCount?: number;
-    }>();
+    const body = await c.req.json<{
+      childId?: unknown;
+      deviceToken?: unknown;
+      message?: unknown;
+      isUnknownContact?: unknown;
+      messageCount?: unknown;
+    }>().catch(() => null);
+    if (!body) return c.json({ error: "Invalid JSON body" }, 400);
 
-    if (!childId || !message) return c.json({ error: "childId and message required" }, 400);
+    const childId = typeof body.childId === "string" ? body.childId : "";
+    const deviceToken = typeof body.deviceToken === "string" ? body.deviceToken : "";
+    const message = typeof body.message === "string" ? body.message : "";
 
-    const childRows = await db.select().from(children).where(eq(children.id, childId));
-    if (childRows.length === 0) return c.json({ error: "Child not found" }, 404);
+    if (!childId || !deviceToken || !message) {
+      return c.json({ error: "childId, deviceToken and message required" }, 400);
+    }
+    if (message.length > MAX_MESSAGE_LENGTH) {
+      return c.json({ error: "Message too long" }, 400);
+    }
+
+    // A single device cannot generate unbounded alerts (or DB writes).
+    if (!rateLimit(`risk-scan:${childId}`, 120, 60_000)) {
+      return c.json({ error: "Too many requests" }, 429);
+    }
+
+    const child = await findChildForDevice(childId, deviceToken);
+    if (!child) return c.json({ error: "Unknown device" }, 401);
+
+    const isUnknownContact = body.isUnknownContact === true;
+    const messageCount = typeof body.messageCount === "number" && Number.isFinite(body.messageCount)
+      ? Math.max(1, Math.floor(body.messageCount))
+      : 1;
 
     const result = scoreMessage({ message, isUnknownContact, messageCount });
 
@@ -55,8 +88,8 @@ const app = new Hono()
       const id = randomUUID();
       await db.insert(alerts).values({
         id,
-        childId,
-        familyId: childRows[0].familyId,
+        childId: child.id,
+        familyId: child.familyId,
         riskScore: result.score,
         summary: result.summary,
         category: result.category,

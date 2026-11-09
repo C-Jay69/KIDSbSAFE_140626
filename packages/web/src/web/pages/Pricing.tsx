@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { useListPlans, useCustomer } from "autumn-js/react";
+import { useCustomer } from "autumn-js/react";
 import { authClient } from "../lib/auth";
 import SiteFooter from "../components/SiteFooter";
 
@@ -73,10 +73,8 @@ function annualPrice(monthly: number): number {
 export default function PricingPage() {
   const { data: session } = authClient.useSession();
   const { data: customer, attach, isPending } = useCustomer();
-  const { data: plans } = useListPlans();
   const [interval, setInterval] = useState<BillingInterval>("monthly");
   const [pwyc, setPwyc] = useState<number>(PAY_WHAT_YOU_CAN_MIN);
-  const [pwycMsg, setPwycMsg] = useState("");
 
   const activePlan = customer?.subscriptions?.[0]?.planId ?? "free";
 

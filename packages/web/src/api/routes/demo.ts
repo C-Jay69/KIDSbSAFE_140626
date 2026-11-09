@@ -1,27 +1,41 @@
 import { Hono } from "hono";
+import { eq } from "drizzle-orm";
+import { randomUUID } from "crypto";
 import { db } from "../database";
 import { families, children, gpsEvents, alerts } from "../database/schema";
-import { eq } from "drizzle-orm";
-import { requireAuth, authMiddleware } from "../middleware/auth";
-import { randomUUID } from "crypto";
+import { requireAuth, authMiddleware, type AppVariables } from "../middleware/auth";
 
 // One-click demo data: creates a sample family, two children, simulated GPS
 // points, and sample risk alerts (incl. grooming examples from the spec).
-// Safe to call repeatedly — it resets the demo family first.
-const app = new Hono()
+//
+// The demo is only available before the parent creates their real family
+// (the dashboard only shows the button in that state). Refusing afterwards
+// means the endpoint can never delete real alerts or create a second family,
+// both of which the previous implementation did.
+const app = new Hono<{ Variables: AppVariables }>()
   .use(authMiddleware)
   .post("/", requireAuth, async (c) => {
     const user = c.get("user")!;
     try {
-      // Reset any existing demo family for this user.
-      const existing = await db.select().from(families).where(eq(families.parentUserId, user.id));
-      for (const fam of existing) {
-        await db.delete(alerts).where(eq(alerts.familyId, fam.id)).catch(() => {});
-        await db.delete(gpsEvents).where(eq(gpsEvents.childId, "x")).catch(() => {});
+      const existing = await db
+        .select({ id: families.id })
+        .from(families)
+        .where(eq(families.parentUserId, user.id))
+        .limit(1);
+
+      if (existing.length > 0) {
+        return c.json({
+          ok: false,
+          error: "Demo data is only available before you create a family.",
+        }, 409);
       }
 
       const familyId = randomUUID();
-      await db.insert(families).values({ id: familyId, name: "The Demo Family", parentUserId: user.id });
+      await db.insert(families).values({
+        id: familyId,
+        name: "The Demo Family",
+        parentUserId: user.id,
+      });
 
       const emmaId = randomUUID();
       const liamId = randomUUID();
@@ -85,7 +99,12 @@ const app = new Hono()
         alerts: sampleAlerts.length,
       }, 200);
     } catch (err) {
-      return c.json({ ok: false, error: String(err) }, 500);
+      // A concurrent demo request can trip the unique index on parent_user_id.
+      if ((err as { code?: string }).code === "23505") {
+        return c.json({ ok: false, error: "Demo data already exists." }, 409);
+      }
+      console.error("[demo] seed failed:", err);
+      return c.json({ ok: false, error: "Could not load demo data" }, 500);
     }
   });
 

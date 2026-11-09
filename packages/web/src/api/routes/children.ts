@@ -1,45 +1,109 @@
 import { Hono } from "hono";
+import { and, eq, gt } from "drizzle-orm";
+import { randomInt, randomUUID } from "crypto";
 import { db } from "../database";
 import { families, children } from "../database/schema";
-import { eq } from "drizzle-orm";
-import { requireAuth, authMiddleware } from "../middleware/auth";
-import { randomUUID } from "crypto";
+import { requireAuth, authMiddleware, clientIp, type AppVariables } from "../middleware/auth";
+import { rateLimit } from "../lib/rate-limit";
 
 const PAIRING_CODE_TTL_MS = 15 * 60 * 1000; // 15 min
+const PAIRING_CODE_LENGTH = 6;
 
-function generatePairingCode() {
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
+// Unambiguous 6-character alphabet (no 0/O, 1/I/L). Matches the mobile input
+// mask, which only accepts A-Z and 0-9.
+const PAIRING_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+/**
+ * Crypto-strong pairing code.
+ *
+ * Math.random() is not a CSPRNG: its output is predictable from a handful of
+ * observations, and a pairing code is effectively a temporary credential that
+ * binds a child device. randomInt() is uniform and unpredictable.
+ */
+function generatePairingCode(): string {
+  let code = "";
+  for (let i = 0; i < PAIRING_CODE_LENGTH; i++) {
+    code += PAIRING_ALPHABET[randomInt(PAIRING_ALPHABET.length)];
+  }
+  return code;
 }
 
-const app = new Hono()
+/** Generate a code that is not currently in use by another child. */
+async function generateUniquePairingCode(): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = generatePairingCode();
+    const clash = await db
+      .select({ id: children.id })
+      .from(children)
+      .where(eq(children.pairingCode, code))
+      .limit(1);
+    if (clash.length === 0) return code;
+  }
+  throw new Error("Could not allocate a unique pairing code");
+}
+
+function validateChildInput(name: unknown, age: unknown):
+  | { ok: true; name: string; age: number }
+  | { ok: false; error: string } {
+  if (typeof name !== "string" || name.trim().length === 0) {
+    return { ok: false, error: "Name is required" };
+  }
+  if (name.trim().length > 100) {
+    return { ok: false, error: "Name is too long" };
+  }
+  if (typeof age !== "number" || !Number.isInteger(age) || age < 5 || age > 17) {
+    return { ok: false, error: "Age must be an integer between 5 and 17" };
+  }
+  return { ok: true, name: name.trim(), age };
+}
+
+const app = new Hono<{ Variables: AppVariables }>()
   .use(authMiddleware)
   // Add child
   .post("/", requireAuth, async (c) => {
     const user = c.get("user")!;
-    const { name, age } = await c.req.json<{ name: string; age: number }>();
-    if (!name || !age) return c.json({ error: "Name and age required" }, 400);
+    const body = await c.req.json<{ name?: unknown; age?: unknown }>().catch(() => null);
+    if (!body) return c.json({ error: "Invalid JSON body" }, 400);
 
-    const familyRows = await db.select().from(families).where(eq(families.parentUserId, user.id));
+    const parsed = validateChildInput(body.name, body.age);
+    if (!parsed.ok) return c.json({ error: parsed.error }, 400);
+
+    const familyRows = await db
+      .select()
+      .from(families)
+      .where(eq(families.parentUserId, user.id))
+      .limit(1);
     if (familyRows.length === 0) return c.json({ error: "Create a family first" }, 400);
 
     const id = randomUUID();
-    await db.insert(children).values({ id, familyId: familyRows[0].id, name, age });
-    return c.json({ id, name, age }, 201);
+    await db.insert(children).values({
+      id,
+      familyId: familyRows[0].id,
+      name: parsed.name,
+      age: parsed.age,
+    });
+    return c.json({ id, name: parsed.name, age: parsed.age }, 201);
   })
   // Generate pairing code for a child
   .post("/:id/pair", requireAuth, async (c) => {
     const user = c.get("user")!;
     const childId = c.req.param("id");
 
-    const familyRows = await db.select().from(families).where(eq(families.parentUserId, user.id));
+    const familyRows = await db
+      .select()
+      .from(families)
+      .where(eq(families.parentUserId, user.id))
+      .limit(1);
     if (familyRows.length === 0) return c.json({ error: "No family found" }, 404);
 
-    const childRows = await db.select().from(children).where(eq(children.id, childId));
-    if (childRows.length === 0 || childRows[0].familyId !== familyRows[0].id) {
-      return c.json({ error: "Child not found" }, 404);
-    }
+    const childRows = await db
+      .select()
+      .from(children)
+      .where(and(eq(children.id, childId), eq(children.familyId, familyRows[0].id)))
+      .limit(1);
+    if (childRows.length === 0) return c.json({ error: "Child not found" }, 404);
 
-    const code = generatePairingCode();
+    const code = await generateUniquePairingCode();
     const expiresAt = new Date(Date.now() + PAIRING_CODE_TTL_MS);
 
     await db.update(children)
@@ -50,22 +114,58 @@ const app = new Hono()
   })
   // Child device claims pairing code
   .post("/claim-pair", async (c) => {
-    const { pairingCode, deviceToken } = await c.req.json<{ pairingCode: string; deviceToken: string }>();
-    if (!pairingCode || !deviceToken) return c.json({ error: "pairingCode and deviceToken required" }, 400);
-
-    const childRows = await db.select().from(children).where(eq(children.pairingCode, pairingCode));
-    if (childRows.length === 0) return c.json({ error: "Invalid pairing code" }, 404);
-
-    const child = childRows[0];
-    if (child.pairingCodeExpiresAt && child.pairingCodeExpiresAt < new Date()) {
-      return c.json({ error: "Pairing code expired" }, 410);
+    // Bound brute-force attempts per source address. A 6-char code is only
+    // safe if guessing is rate-limited.
+    if (!rateLimit(`claim-pair:${clientIp(c)}`, 10, 60_000)) {
+      return c.json({ error: "Too many attempts. Try again later." }, 429);
     }
 
-    await db.update(children)
-      .set({ deviceToken, pairedAt: new Date(), pairingCode: null, pairingCodeExpiresAt: null })
-      .where(eq(children.id, child.id));
+    const body = await c.req.json<{ pairingCode?: unknown; deviceToken?: unknown }>().catch(() => null);
+    if (!body) return c.json({ error: "Invalid JSON body" }, 400);
 
-    const familyRows = await db.select().from(families).where(eq(families.id, child.familyId));
+    const pairingCode = typeof body.pairingCode === "string"
+      ? body.pairingCode.trim().toUpperCase()
+      : "";
+    const deviceToken = typeof body.deviceToken === "string" ? body.deviceToken.trim() : "";
+
+    if (pairingCode.length !== PAIRING_CODE_LENGTH || !deviceToken) {
+      return c.json({ error: "pairingCode and deviceToken required" }, 400);
+    }
+    if (deviceToken.length < 16 || deviceToken.length > 200) {
+      return c.json({ error: "Invalid deviceToken" }, 400);
+    }
+
+    const now = new Date();
+
+    // Atomic claim: the UPDATE only matches while the code is still valid, so
+    // two devices racing on the same code cannot both win.
+    const claimed = await db.update(children)
+      .set({ deviceToken, pairedAt: now, pairingCode: null, pairingCodeExpiresAt: null })
+      .where(and(eq(children.pairingCode, pairingCode), gt(children.pairingCodeExpiresAt, now)))
+      .returning({
+        id: children.id,
+        name: children.name,
+        familyId: children.familyId,
+      });
+
+    if (claimed.length === 0) {
+      // Distinguish "expired" from "unknown" without leaking whether a code
+      // exists for a different family.
+      const expired = await db
+        .select({ id: children.id })
+        .from(children)
+        .where(eq(children.pairingCode, pairingCode))
+        .limit(1);
+      if (expired.length > 0) return c.json({ error: "Pairing code expired" }, 410);
+      return c.json({ error: "Invalid pairing code" }, 404);
+    }
+
+    const child = claimed[0];
+    const familyRows = await db
+      .select()
+      .from(families)
+      .where(eq(families.id, child.familyId))
+      .limit(1);
     const family = familyRows[0];
 
     return c.json({

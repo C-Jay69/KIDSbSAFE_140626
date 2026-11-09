@@ -87,12 +87,15 @@ export async function checkUrl(url: string, googleSafeBrowsingKey?: string): Pro
 
   // 3. Google Safe Browsing API (if key provided)
   if (googleSafeBrowsingKey) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
     try {
       const res = await fetch(
         `https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${googleSafeBrowsingKey}`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
           body: JSON.stringify({
             client: { clientId: "kidsbsafe", clientVersion: "1.0" },
             threatInfo: {
@@ -115,7 +118,9 @@ export async function checkUrl(url: string, googleSafeBrowsingKey?: string): Pro
         };
       }
     } catch {
-      // Safe Browsing API failed — don't block, just continue
+      // Safe Browsing API failed or timed out — don't block, just continue
+    } finally {
+      clearTimeout(timeout);
     }
   }
 

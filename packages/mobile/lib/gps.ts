@@ -1,9 +1,6 @@
 import * as Location from "expo-location";
-import Constants from "expo-constants";
 import * as SecureStore from "expo-secure-store";
-
-const apiUrl =
-  Constants.expoConfig?.extra?.apiUrl ?? process.env.EXPO_PUBLIC_API_URL;
+import { API_BASE_URL } from "./config";
 
 let watchSubscription: Location.LocationSubscription | null = null;
 let isRunning = false;
@@ -12,7 +9,7 @@ async function postLocation(lat: number, lng: number, accuracy: number | null) {
   try {
     const deviceToken = await SecureStore.getItemAsync("child_device_token");
     if (!deviceToken) return;
-    await fetch(`${apiUrl}/api/geo`, {
+    await fetch(`${API_BASE_URL}/api/geo`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ deviceToken, lat, lng, accuracy }),

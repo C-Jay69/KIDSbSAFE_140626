@@ -1,11 +1,9 @@
 import { useState } from "react";
 import { Link, useSearch } from "wouter";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../lib/api";
-import { authClient } from "../lib/auth";
 
 export default function PairPage() {
-  const { data: session } = authClient.useSession();
   const qc = useQueryClient();
   const search = useSearch();
   const params = new URLSearchParams(search);
@@ -16,12 +14,6 @@ export default function PairPage() {
   const [pairingCode, setPairingCode] = useState<string | null>(null);
   const [step, setStep] = useState<"add" | "code">("add");
   const [error, setError] = useState("");
-
-  const family = useQuery({
-    queryKey: ["family"],
-    queryFn: async () => (await api.families.me.$get()).json(),
-    enabled: !!session,
-  });
 
   const addChild = useMutation({
     mutationFn: async ({ name, age }: { name: string; age: number }) =>
@@ -63,8 +55,6 @@ export default function PairPage() {
       setStep("code");
     }
   };
-
-  const familyData = family.data as { family: any; children: any[] } | undefined;
 
   return (
     <div className="min-h-screen flex items-start justify-center px-4 pt-16" style={{ background: "var(--bg)" }}>
