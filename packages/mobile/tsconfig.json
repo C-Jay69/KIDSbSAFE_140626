@@ -1,6 +1,10 @@
 {
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
-    "strict": true
+    "strict": true,
+    // `lib/api.ts` imports the server's `AppType` type-only, so TypeScript
+    // also checks packages/web — whose API routes import Node builtins
+    // (`crypto`). Node's types must therefore be visible to this program.
+    "types": ["node"]
   }
 }

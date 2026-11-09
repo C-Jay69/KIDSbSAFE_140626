@@ -173,6 +173,48 @@ const app = new Hono<{ Variables: AppVariables }>()
       child: { name: child.name, id: child.id },
       family: { parentName: family?.name ?? "Your Parent", id: child.familyId },
     }, 200);
+  })
+  // Child device re-validates its stored token on launch.
+  //
+  // The mobile app caches "paired" locally, but that flag can outlive the
+  // server-side link (re-seeded database, deleted child, different account).
+  // This endpoint is what makes the device tell the child the truth.
+  .post("/device", async (c) => {
+    if (!rateLimit(`device-verify:${clientIp(c)}`, 20, 60_000)) {
+      return c.json({ error: "Too many requests. Try again later." }, 429);
+    }
+
+    const body = await c.req.json<{ deviceToken?: unknown }>().catch(() => null);
+    const deviceToken = typeof body?.deviceToken === "string" ? body.deviceToken.trim() : "";
+    if (!deviceToken) return c.json({ error: "deviceToken required" }, 400);
+    if (deviceToken.length < 16 || deviceToken.length > 200) {
+      return c.json({ error: "Invalid deviceToken" }, 400);
+    }
+
+    const rows = await db
+      .select({
+        id: children.id,
+        name: children.name,
+        pairedAt: children.pairedAt,
+        familyId: children.familyId,
+        familyName: families.name,
+      })
+      .from(children)
+      .innerJoin(families, eq(families.id, children.familyId))
+      .where(eq(children.deviceToken, deviceToken))
+      .limit(1);
+
+    // A token that no longer resolves means the device must pair again.
+    if (rows.length === 0 || !rows[0].pairedAt) {
+      return c.json({ error: "Device is not paired" }, 404);
+    }
+
+    const row = rows[0];
+    return c.json({
+      paired: true,
+      child: { id: row.id, name: row.name },
+      family: { id: row.familyId, parentName: row.familyName },
+    }, 200);
   });
 
 export default app;

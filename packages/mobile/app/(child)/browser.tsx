@@ -4,11 +4,27 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { WebView, WebViewNavigation } from "react-native-webview";
+import {
+  WebView as NativeWebView,
+  type WebViewNavigation,
+  type WebViewProps,
+} from "react-native-webview";
+import type { WebView as WebViewInstance } from "react-native-webview";
+import type { ComponentType, RefAttributes } from "react";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { API_BASE_URL } from "../../lib/config";
+
+/**
+ * react-native-webview 14.0.1 declares `class WebView<P = undefined> extends
+ * Component<WebViewProps & P>`. Under `strictNullChecks` the intersection with
+ * `undefined` collapses to `never`, so every JSX prop fails to typecheck.
+ * Re-type the component locally rather than casting at the call site.
+ */
+const WebView = NativeWebView as unknown as ComponentType<
+  WebViewProps & RefAttributes<WebViewInstance>
+>;
 
 // URLs that are always safe to skip scanning (performance)
 const SKIP_DOMAINS = [
@@ -37,7 +53,7 @@ function normaliseUrl(raw: string): string {
 
 export default function SafeBrowser() {
   const router = useRouter();
-  const webviewRef = useRef<WebView>(null);
+  const webviewRef = useRef<WebViewInstance>(null);
   const [url, setUrl] = useState("https://www.google.com");
   const [inputUrl, setInputUrl] = useState("google.com");
   const [loading, setLoading] = useState(false);

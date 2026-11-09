@@ -1,38 +1,96 @@
-import { View, Text, StyleSheet, Pressable, Image } from "react-native";
+import { View, Text, StyleSheet, Pressable, Image, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useEffect, useState } from "react";
-import { startGpsTracking } from "../../lib/gps";
+import { useCallback, useEffect, useState } from "react";
+import { startGpsTracking, stopGpsTracking } from "../../lib/gps";
+import { clearPairedDevice, PAIRING_KEYS, verifyPairedDevice } from "../../lib/child-pairing";
 
 export default function ChildHome() {
   const router = useRouter();
-  const [paired, setPaired] = useState<boolean | null>(null);
+  const [status, setStatus] = useState<"checking" | "paired" | "unpaired">("checking");
   const [parentName, setParentName] = useState<string | null>(null);
   const [childName, setChildName] = useState<string | null>(null);
 
-  useEffect(() => {
-    Promise.all([
-      AsyncStorage.getItem("child_paired"),
-      AsyncStorage.getItem("parent_name"),
-      AsyncStorage.getItem("child_name"),
-    ]).then(([paired, parentName, childName]) => {
-      setPaired(paired === "true");
-      setParentName(parentName);
-      setChildName(childName);
-    });
-  }, []);
+  /**
+   * The cached "paired" flag is not proof: it survives on the device after the
+   * server-side link is gone (re-seeded database, deleted child, another
+   * account). Re-validate every time the screen is focused so it reflects
+   * reality — including on return from the pairing screen, which replaces the
+   * route instead of unmounting it.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+
+      (async () => {
+        const [cachedPaired, cachedChildName, cachedParentName] = await Promise.all([
+          AsyncStorage.getItem(PAIRING_KEYS.paired),
+          AsyncStorage.getItem(PAIRING_KEYS.childName),
+          AsyncStorage.getItem(PAIRING_KEYS.parentName),
+        ]);
+
+        const result = await verifyPairedDevice();
+        if (cancelled) return;
+
+        if (result.status === "paired") {
+          setChildName(result.device.childName);
+          setParentName(result.device.parentName);
+          setStatus("paired");
+          return;
+        }
+
+        if (result.status === "unpaired") {
+          if (cachedPaired === "true") await clearPairedDevice();
+          if (cancelled) return;
+          setChildName(null);
+          setParentName(null);
+          setStatus("unpaired");
+          return;
+        }
+
+        // Server unreachable: trust the cache rather than locking the child
+        // out of a device that may still be perfectly paired.
+        setChildName(cachedChildName);
+        setParentName(cachedParentName);
+        setStatus(cachedPaired === "true" ? "paired" : "unpaired");
+      })();
+
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
 
   // Once paired, begin reporting live GPS to the parent dashboard.
   useEffect(() => {
-    if (paired) {
-      startGpsTracking();
-    }
-  }, [paired]);
+    if (status === "paired") void startGpsTracking();
+  }, [status]);
 
-  if (paired === null) return null;
+  function handleReset() {
+    Alert.alert(
+      "Reset this device?",
+      "This unlinks the device from your parent. You will need a new pairing code from them to reconnect.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Reset",
+          style: "destructive",
+          onPress: async () => {
+            stopGpsTracking();
+            await clearPairedDevice();
+            setChildName(null);
+            setParentName(null);
+            setStatus("unpaired");
+          },
+        },
+      ]
+    );
+  }
 
-  if (!paired) {
+  if (status === "checking") return null;
+
+  if (status === "unpaired") {
     return (
       <SafeAreaView style={styles.safe}>
         <View style={styles.center}>
@@ -81,6 +139,9 @@ export default function ChildHome() {
         <Pressable style={styles.linkBtn} onPress={() => router.push("/(child)/consent")}>
           <Text style={styles.linkText}>I'm 13+ and want to request changes</Text>
         </Pressable>
+        <Pressable style={styles.resetBtn} onPress={handleReset} accessibilityRole="button">
+          <Text style={styles.resetText}>Not this device? Reset pairing</Text>
+        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -104,6 +165,8 @@ const styles = StyleSheet.create({
   outlineBtnText: { color: "#A78BFA", fontWeight: "600", fontSize: 15 },
   linkBtn: { marginTop: 8 },
   linkText: { color: "#475569", fontSize: 13, textDecorationLine: "underline" },
+  resetBtn: { marginTop: 18, paddingVertical: 8, paddingHorizontal: 12 },
+  resetText: { color: "#64748B", fontSize: 13, textDecorationLine: "underline" },
   shieldWrap: {
     width: 100, height: 100, borderRadius: 50,
     backgroundColor: "rgba(124,58,237,0.15)", alignItems: "center", justifyContent: "center", marginBottom: 20,

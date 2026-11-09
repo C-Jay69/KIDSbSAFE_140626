@@ -44,7 +44,7 @@ export default function AlertsScreen() {
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={alertsQ.isLoading} onRefresh={() => alertsQ.refetch()} />}
+        refreshControl={<RefreshControl refreshing={alertsQ.isLoading} onRefresh={() => { void alertsQ.refetch(); }} />}
       >
         {alertList.length === 0 ? (
           <View style={styles.empty}>
